@@ -29,7 +29,7 @@ DEBUG = True
 
 # added for deploy the project to vercel
 
-ALLOWED_HOSTS = ['.vercel.app', '.now.sh']
+ALLOWED_HOSTS = ['.vercel.app', '.now.sh' ,  '127.0.0.1' ]
 
 # Application definition
 
