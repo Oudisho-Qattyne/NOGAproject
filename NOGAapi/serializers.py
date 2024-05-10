@@ -1,5 +1,5 @@
 from rest_framework.serializers import ModelSerializer
-from .models import User
+from .models import User , Branch , City 
 
 class UserSerializer(ModelSerializer):
     class Meta:
@@ -7,7 +7,7 @@ class UserSerializer(ModelSerializer):
         fields = ["id" , "username" , "password"]
         extra_kwargs = {
             "password" : {'write_only' : True},
-            "id" : {'write_only' : True},
+            "id" : {'read_only' : True},
         }
         
         
@@ -19,4 +19,15 @@ class UserSerializer(ModelSerializer):
         user.save()
         return user
    
+class BranchSerializer(ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = ["id" , "number" , "location" ,"city" , "area" , "street" , "manager"]
         
+        
+        
+        
+class CitySerializer(ModelSerializer):
+    class Meta:
+        model = Branch
+        fields = ["id" , "city_name"]

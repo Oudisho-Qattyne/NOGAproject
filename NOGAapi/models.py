@@ -25,3 +25,17 @@ class Employee(models.Model):
 class UserEmployee():
     user = models.OneToOneField(User , on_delete=models.CASCADE)
     employee = models.OneToOneField(Employee , on_delete=models.CASCADE)
+    
+    
+class City():
+    city_name = models.CharField(max_length=100)
+    
+class Branch():
+    number = models.IntegerField()
+    location = models.CharField(max_length=255)
+    area = models.CharField(max_length=255)
+    street = models.CharField(max_length=255)
+    manager = models.ForeignKey(Employee , on_delete=models.DO_NOTHING)
+    # city = models.ForeignKey(City , on_delete=models.DO_NOTHING)
+    
+    
