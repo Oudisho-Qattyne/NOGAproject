@@ -3,13 +3,26 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
-from .serializers import UserSerializer
+from .serializers import *
 from django_filters import rest_framework as filter
 from rest_framework import filters
-from .models import User
+from .models import User,Employee
 # Create your views here.
+# --------Employees---------
 
+class Job_TypeView(generics.ListAPIView,generics.ListCreateAPIView):
+    queryset=Job_Type.objects.all()
+    serializer_class=Job_TypeSerializer
+    filter_backends=[filter.DjangoFilterBackend]
+    filterset_fields=['id','job_type']
 
+class EmployeesApiView(generics.ListAPIView,generics.ListCreateAPIView):
+    queryset=Employee.objects.all()
+    serializer_class=EmployeeSerializer
+    filter_backends=[filter.DjangoFilterBackend]
+    filterset_fields=['national_number','first_name','middle_name','last_name','email','salary','address','gender','job_type_id']
+    
+#--------EndEmp----------
 class RrgisterAPIView(APIView):
     def post(self , requset):
         data = requset.data
