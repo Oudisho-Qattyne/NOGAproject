@@ -6,26 +6,40 @@ from rest_framework import generics
 from .serializers import UserSerializer
 from django_filters import rest_framework as filter
 from rest_framework import filters
-from .models import User
+from .models import User , Job_Type , Employee , Branch , City 
+from .serializers import Job_TypeSerializer , EmployeeSerializer ,BranchSerializer , CitySerializer
 # Create your views here.
 # --------Employees---------
 
-class Job_TypeView(generics.ListAPIView,generics.ListCreateAPIView):
+class Job_TypesView(generics.ListAPIView,generics.ListCreateAPIView ):
     queryset=Job_Type.objects.all()
     serializer_class=Job_TypeSerializer
     filter_backends=[filter.DjangoFilterBackend]
     filterset_fields=['id','job_type']
 
+
+class Job_TypeView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.UpdateAPIView ):
+    queryset= Job_Type.objects.all()
+    serializer_class = Job_TypeSerializer
+    
 class EmployeesApiView(generics.ListAPIView,generics.ListCreateAPIView):
     queryset=Employee.objects.all()
     serializer_class=EmployeeSerializer
     filter_backends=[filter.DjangoFilterBackend]
     filterset_fields=['national_number','first_name','middle_name','last_name','email','salary','address','gender','job_type_id']
-    
+
+class EmployeeApiView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.UpdateAPIView ):
+    queryset=Employee.objects.all()
+    serializer_class=EmployeeSerializer    
 #--------EndEmp----------
 class RrgisterAPIView(APIView):
     def post(self , requset):
         data = requset.data
+        employee = data["employee"]
+        if True:
+             return Response({
+                "validationError" : {Employee(pk=employee)},
+            })
         if(data["password"] != data["confirm_password"]):
             return Response({
                 "validationError" : "password and confirm_password don't macth",
