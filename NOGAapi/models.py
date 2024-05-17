@@ -1,18 +1,37 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 # Create your models here.
-
+class User(AbstractUser):
+    username = models.CharField(max_length=100 , unique=True)
+    password = models.CharField(max_length=100)
+    
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS=[]
+   
         
         
 class Employee(models.Model):
-    first_name = models.CharField(max_length=100)
-    middle_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
-    birth_date = models.DateField()
-    gender = models.BooleanField()
-    salary = models.BooleanField()
-    address = models.CharField(max_length=200)
-    data_of_employment = models.DateField()
+    national_number=models.IntegerField(unique=True)
+    first_name=models.CharField(max_length=20)
+    middle_name=models.CharField(max_length=20)
+    last_name=models.CharField(max_length=20)
+    email=models.EmailField(max_length=50 , default="test@gmail.com")
+    birth_date=models.DateField()
+    gender=models.BooleanField()
+    salary=models.IntegerField()
+    address=models.CharField(max_length=50)
+    date_of_employment=models.DateField()
+    job_type=models.ForeignKey(Job_Type,on_delete=models.PROTECT,default=1)        
+        
+# class Employee(models.Model):
+#     first_name = models.CharField(max_length=100)
+#     middle_name = models.CharField(max_length=100)
+#     last_name = models.CharField(max_length=100)
+#     birth_date = models.DateField()
+#     gender = models.BooleanField()
+#     salary = models.BooleanField()
+#     address = models.CharField(max_length=200)
+#     data_of_employment = models.DateField()
     
 class User(AbstractUser):
     username = models.CharField(max_length=100 , unique=True)

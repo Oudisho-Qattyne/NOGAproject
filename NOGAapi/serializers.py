@@ -1,7 +1,20 @@
-from rest_framework.serializers import ModelSerializer
-from .models import User , Branch , City 
+from rest_framework import serializers
+from .models import *
 
-class UserSerializer(ModelSerializer):
+class Job_TypeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Job_Type
+        fields=['id','job_type']
+
+
+class EmployeeSerializer(serializers.ModelSerializer):
+    job_type=serializers.StringRelatedField()
+    class Meta:
+        model=Employee
+        fields=['national_number','first_name','middle_name','last_name','email','salary','address','date_of_employment','birth_date','gender','job_type']
+
+
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model=User
         fields = ["id" , "username" , "password"]
@@ -19,7 +32,7 @@ class UserSerializer(ModelSerializer):
         user.save()
         return user
    
-class BranchSerializer(ModelSerializer):
+class BranchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Branch
         fields = ["id" , "number" , "location" ,"city" , "area" , "street" , "manager"]
@@ -27,7 +40,7 @@ class BranchSerializer(ModelSerializer):
         
         
         
-class CitySerializer(ModelSerializer):
+class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
         fields = ["id" , "city_name"]
