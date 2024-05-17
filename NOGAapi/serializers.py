@@ -29,5 +29,5 @@ class BranchSerializer(ModelSerializer):
         
 class CitySerializer(ModelSerializer):
     class Meta:
-        model = Branch
+        model = City
         fields = ["id" , "city_name"]

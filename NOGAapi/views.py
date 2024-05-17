@@ -3,10 +3,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import generics
-from .serializers import UserSerializer
+from .serializers import UserSerializer , BranchSerializer , CitySerializer
 from django_filters import rest_framework as filter
 from rest_framework import filters
-from .models import User
+from .models import User , Branch , City
 # Create your views here.
 
 
@@ -24,7 +24,7 @@ class RrgisterAPIView(APIView):
         return Response(serializedData.data , status=status.HTTP_200_OK)
     
     
-class UsersApiView(generics.ListAPIView):
+class UsersApiView(generics.ListAPIView ):
     queryset= User.objects.all()
     serializer_class = UserSerializer
     filter_backends = [filter.DjangoFilterBackend , filters.SearchFilter , filters.OrderingFilter]
@@ -32,7 +32,7 @@ class UsersApiView(generics.ListAPIView):
     search_fields = ['username']
     ordering_fields = ['username' , 'id']
     
-class UserApiView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.UpdateAPIView):
+class UserApiView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.UpdateAPIView ):
     queryset= User.objects.all()
     serializer_class = UserSerializer
     # def get(self , request , id):
@@ -42,8 +42,30 @@ class UserApiView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.
     #         return Response(serializedUser.data , status=status.HTTP_200_OK)
     #     else:
     #         return Response({"message" : "something went wrong"})
-class BranchAPIView(APIView):
-    def get(self , request):
-        pass   
     
+class BranchsAPIView(generics.ListAPIView , generics.ListCreateAPIView ):
+    queryset= Branch.objects.all()
+    serializer_class = BranchSerializer
+    filter_backends = [filter.DjangoFilterBackend , filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields = ["id" , "number" ,"city" , "area" , "street" , "manager"]
+    search_fields = ["id" , "number" , "location"  , "area" , "street" ]
+    ordering_fields = ["id" , "number" ,"city" , "area" , "street" , "manager"]
+    
+class BranchAPIView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.UpdateAPIView ):
+    queryset= Branch.objects.all()
+    serializer_class = BranchSerializer
+    
+    
+class CitiesAPIView(generics.ListAPIView , generics.ListCreateAPIView ):
+    queryset= City.objects.all()
+    serializer_class = CitySerializer
+    filter_backends = [filter.DjangoFilterBackend , filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields = ["id" ,"city_name"]
+    search_fields = ["id" , "city_name"]
+    ordering_fields = ["id" ,"city_name"]
+  
+class CityAPIView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.UpdateAPIView ):
+    queryset= City.objects.all()
+    serializer_class = CitySerializer
+        
     

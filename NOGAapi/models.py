@@ -1,13 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 # Create your models here.
-class User(AbstractUser):
-    username = models.CharField(max_length=100 , unique=True)
-    password = models.CharField(max_length=100)
-    
-    USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS=[]
-   
+
         
         
 class Employee(models.Model):
@@ -20,22 +14,28 @@ class Employee(models.Model):
     address = models.CharField(max_length=200)
     data_of_employment = models.DateField()
     
+class User(AbstractUser):
+    username = models.CharField(max_length=100 , unique=True)
+    password = models.CharField(max_length=100)
+    emolyee = models.OneToOneField(Employee , on_delete=models.DO_NOTHING , null=True)
+    USERNAME_FIELD = 'username'
+    REQUIRED_FIELDS=[]
     
     
-class UserEmployee():
+class UserEmployee(models.Model):
     user = models.OneToOneField(User , on_delete=models.CASCADE)
     employee = models.OneToOneField(Employee , on_delete=models.CASCADE)
     
     
-class City():
+class City(models.Model):
     city_name = models.CharField(max_length=100)
     
-class Branch():
+class Branch(models.Model):
     number = models.IntegerField()
     location = models.CharField(max_length=255)
     area = models.CharField(max_length=255)
     street = models.CharField(max_length=255)
-    manager = models.ForeignKey(Employee , on_delete=models.DO_NOTHING)
-    # city = models.ForeignKey(City , on_delete=models.DO_NOTHING)
+    manager = models.ForeignKey(Employee , on_delete=models.DO_NOTHING,default=1)
+    city = models.ForeignKey(City , on_delete=models.DO_NOTHING , default=1)
     
     
