@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 
    
 class Job_Type(models.Model):
-    job_type=models.CharField(max_length=20)
+    job_type=models.CharField(max_length=20 , unique=True)
     def __str__(self) -> str:
         return self.job_type
         
@@ -19,7 +19,7 @@ class Employee(models.Model):
     salary=models.IntegerField()
     address=models.CharField(max_length=50)
     date_of_employment=models.DateField()
-    job_type=models.ForeignKey(Job_Type,on_delete=models.PROTECT,default=1)        
+    job_type=models.ForeignKey(Job_Type,on_delete=models.DO_NOTHING,default=1)        
     
   
 # class Employee(models.Model):
@@ -61,7 +61,7 @@ class Branch(models.Model):
     location = models.CharField(max_length=255)
     area = models.CharField(max_length=255)
     street = models.CharField(max_length=255)
-    manager = models.ForeignKey(Employee , on_delete=models.DO_NOTHING,default=1)
-    city = models.ForeignKey(City , on_delete=models.DO_NOTHING , default=1)
+    manager = models.ForeignKey(Employee , on_delete=models.DO_NOTHING)
+    city = models.ForeignKey(City , on_delete=models.DO_NOTHING )
     
     

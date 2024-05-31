@@ -8,25 +8,39 @@ class Job_TypeSerializer(serializers.ModelSerializer):
 
 
 class EmployeeSerializer(serializers.ModelSerializer):
-    job_type=Job_TypeSerializer()
+    job_type_title=serializers.StringRelatedField(source='job_type')
     class Meta:
         model=Employee
-        fields=['national_number','first_name','middle_name','last_name','email','salary','address','date_of_employment','birth_date','gender','job_type']
-        
+        fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','date_of_employment','birth_date','gender','job_type' , 'job_type_title']
+        extra_kwargs = {
+            "job_type_title" : {'read_only' : True},
+            "job_type" : {'write_only' : True,
+                          "required":True
+                          },
+        }
 
 
 class UserSerializer(serializers.ModelSerializer):
-    employee=EmployeeSerializer()
+    # employee=EmployeeSerializer()
     
     class Meta:
         model=User
         fields = ["id" , "username" , "password" , 'employee']
+        
         extra_kwargs = {
             "password" : {'write_only' : True},
-            "id" : {'read_only' : True},
+            'required' : True,
+            "id" : {'read_only' : True,
+            'required' : True},
+            'employee':{'required' : True}
         }
         
+    # def validate(self, attrs):
+    #     print(self)
         
+    #     if(not bool(hasattr(attrs , 'employee'))):        
+    #         raise serializers.ValidationError({"error" : 'employee field required'})
+    #     return self
     def create(self, validated_data):
         password = validated_data.pop('password' , None)
         user = self.Meta.model(**validated_data)
@@ -39,7 +53,15 @@ class BranchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Branch
         fields = ["id" , "number" , "location" ,"city" , "area" , "street" , "manager"]
-        
+        extra_kwargs = {
+         "city" : {"required" : True},
+         "manager" : {"required" : True}
+         }
+    def validate(self, attrs):
+        if(bool(attrs["manager"].job_type.job_type == "Manager")):
+            return super().validate(attrs)
+        else:
+            raise serializers.ValidationError({"manager" : "employee in not manager"})
         
         
         

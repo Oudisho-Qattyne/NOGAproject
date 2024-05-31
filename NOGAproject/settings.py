@@ -41,8 +41,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
+    'djoser',
     'django_filters',
-    'NOGAapi'
+    'NOGAapi',
+    'rest_framework_simplejwt'
 ]
 
 MIDDLEWARE = [
@@ -128,11 +131,31 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES' :(
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication' ,
+        'rest_framework.authentication.SessionAuthentication' ,
+    )
+}
 
+
+# REST_FRAMEWORK = {
+#   'DEFAULT_AUTHENTICATION_CLASSES': (
+#         'rest_framework.authentication.TokenAuthentication',
+#         'rest_framework.authentication.SessionAuthentication',
+#     ),
+  
+
+# }
 # added for deploy the project to vercel
 
-STATICFILES_DIRS = [BASE_DIR/'static',]
-STATIC_ROOT = BASE_DIR/'staticfiles'
+# STATICFILES_DIRS = [BASE_DIR/'static',]
+# STATIC_ROOT = BASE_DIR/'staticfiles'
 
 
 AUTH_USER_MODEL = 'NOGAapi.User'
+
+DJOSER = {
+    'USER_ID_FIELD' : 'username'
+}
