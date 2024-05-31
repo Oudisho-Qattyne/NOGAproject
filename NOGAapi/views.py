@@ -7,9 +7,10 @@ from .serializers import UserSerializer
 from django_filters import rest_framework as filter
 from rest_framework import filters
 from .models import User , Job_Type , Employee , Branch , City 
-from .serializers import Job_TypeSerializer , EmployeeSerializer ,BranchSerializer , CitySerializer
+from .serializers import Job_TypeSerializer , EmployeeSerializer ,BranchSerializer , CitySerializer , MyTokenObtainPairSerializer
 from rest_framework import exceptions
 from rest_framework.permissions import IsAuthenticated 
+from rest_framework_simplejwt.views import TokenObtainPairView 
 from .authentication import create_access_token , create_refresh_token
 from .permissions import IsManager , IsHR , IsSalesOfficer , IsCEO , IsSalesOfficerOrCEO , IsHROrCEO
 # Create your views here.
@@ -101,7 +102,11 @@ class UserApiView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.
     #         return Response(serializedUser.data , status=status.HTTP_200_OK)
     #     else:
     #         return Response({"message" : "something went wrong"})
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class=MyTokenObtainPairSerializer
     
+    
+
 class BranchsAPIView(generics.ListAPIView , generics.ListCreateAPIView ):
     queryset= Branch.objects.all()
     serializer_class = BranchSerializer

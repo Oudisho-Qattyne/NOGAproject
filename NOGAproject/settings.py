@@ -159,3 +159,7 @@ AUTH_USER_MODEL = 'NOGAapi.User'
 DJOSER = {
     'USER_ID_FIELD' : 'username'
 }
+
+SIMPLE_JWT = {
+    "TOKEN_OBTAIN_SERIALIZER" : "NOGAapi.serializers.MyTokenObtainPairSerializer"
+}
