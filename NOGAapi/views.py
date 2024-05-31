@@ -38,11 +38,42 @@ class EmployeesApiView(generics.ListAPIView,generics.ListCreateAPIView):
     permission_classes=[IsHROrCEO]
     filter_backends=[filter.DjangoFilterBackend]
     filterset_fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','gender','job_type']
+    
 
 class EmployeeApiView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.UpdateAPIView ):
     queryset=Employee.objects.all()
     permission_classes=[IsHROrCEO]
-    serializer_class=EmployeeSerializer    
+    serializer_class=EmployeeSerializer  
+    def put(self, request, *args, **kwargs):
+        employee = self.get_object()
+        data = request.data
+        job_type = Job_Type.objects.get(id = data['job_type'])
+        if(not request.user.is_staff):
+            if(hasattr(request.user.employee , 'job_type')):
+                if(request.user.employee.job_type.job_type == "HR"):
+                    if(employee.job_type.job_type != job_type.job_type):
+                        print(job_type.job_type)
+                        print(employee.job_type.job_type)
+                        print(bool(employee.job_type.job_type != job_type.job_type ))
+                        print(employee.job_type.job_type != job_type.job_type )
+                        return Response({
+                            "job_type": "You do not have permission to change the job type."
+                        }) 
+        employee.national_number= data['national_number']
+        employee.first_name= data['first_name']
+        employee.middle_name= data['middle_name']
+        employee.last_name= data['last_name']
+        employee.email= data['email']
+        employee.birth_date= data['birth_date']
+        employee.gender = data['gender']
+        employee.salary= data['salary']
+        employee.address = data['address']
+        employee.date_of_employment= data['date_of_employment']
+        employee.job_type= Job_Type.objects.get(id=data['job_type'])  
+        employee.save()
+        serialized_data = EmployeeSerializer(employee)
+        # serialized_data.is_valid(raise_exception=True)
+        return Response(serialized_data.data)
 #--------EndEmp----------
 
 #-------Auth-------------

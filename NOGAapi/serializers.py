@@ -59,8 +59,10 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
         refresh = self.get_token(self.user)
-        
-        data['role'] = self.user.employee.job_type.job_type
+        if(self.user.is_staff):
+            data['role'] = 'admin'
+        else:
+            data['role'] = self.user.employee.job_type.job_type
         
         data["refresh"] = str(refresh)
         data["access"] = str(refresh.access_token)
