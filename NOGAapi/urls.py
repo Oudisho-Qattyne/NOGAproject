@@ -1,5 +1,5 @@
 from django.urls import path , include , re_path
-from .views import RrgisterAPIView , LoginAPIView , UsersApiView , UserApiView , EmployeesApiView , EmployeeApiView , Job_TypesView , Job_TypeView , BranchsAPIView , BranchAPIView , CitiesAPIView , CityAPIView , MyTokenObtainPairView
+from .views import *
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework_simplejwt.views import TokenObtainPairView,TokenRefreshView
 urlpatterns = [
@@ -26,6 +26,14 @@ urlpatterns = [
     path('cities',CitiesAPIView.as_view()),
     path('cities/<int:pk>' , CityAPIView.as_view() ),
     
+    path('customer',CustomersApiView.as_view()),
+    path('customer/<int:pk>',CustomerApiView.as_view()),
+    
+    path('products/',ProductsApiview.as_view()),
+    path('product/<int:pk>',ProductApiview.as_view()),
+    
+    path('products_categories/',ProductscategoriesApiView.as_view()),
+    path('product_category/<int:pk>',ProductcategoryApiView.as_view()),
     
     path('login', MyTokenObtainPairView.as_view() , name='token_obtain_pair'),
     path('refresh', TokenRefreshView.as_view(), name='token_refresh')

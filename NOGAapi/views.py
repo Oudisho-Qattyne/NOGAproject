@@ -6,13 +6,14 @@ from rest_framework import generics
 from .serializers import UserSerializer
 from django_filters import rest_framework as filter
 from rest_framework import filters
-from .models import User , Job_Type , Employee , Branch , City 
-from .serializers import Job_TypeSerializer , EmployeeSerializer ,BranchSerializer , CitySerializer , MyTokenObtainPairSerializer
+from .models import *
+from .serializers import *
 from rest_framework import exceptions
 from rest_framework.permissions import IsAuthenticated 
 from rest_framework_simplejwt.views import TokenObtainPairView 
 from .authentication import create_access_token , create_refresh_token
 from .permissions import IsManager , IsHR , IsSalesOfficer , IsCEO , IsSalesOfficerOrCEO , IsHROrCEO
+from .pagenation import Paginator
 # Create your views here.
 # --------Employees---------
 
@@ -37,13 +38,14 @@ class EmployeesApiView(generics.ListAPIView,generics.ListCreateAPIView):
     serializer_class=EmployeeSerializer
     permission_classes=[IsHROrCEO]
     filter_backends=[filter.DjangoFilterBackend]
-    filterset_fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','gender','job_type']
+    filterset_fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','gender','job_type' , 'branch' , 'phone']
     
 
 class EmployeeApiView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.UpdateAPIView ):
     queryset=Employee.objects.all()
     permission_classes=[IsHROrCEO]
     serializer_class=EmployeeSerializer  
+    
     def put(self, request, *args, **kwargs):
         employee = self.get_object()
         data = request.data
@@ -51,11 +53,7 @@ class EmployeeApiView( generics.RetrieveAPIView, generics.DestroyAPIView , gener
         if(not request.user.is_staff):
             if(hasattr(request.user.employee , 'job_type')):
                 if(request.user.employee.job_type.job_type == "HR"):
-                    if(employee.job_type.job_type != job_type.job_type):
-                        print(job_type.job_type)
-                        print(employee.job_type.job_type)
-                        print(bool(employee.job_type.job_type != job_type.job_type ))
-                        print(employee.job_type.job_type != job_type.job_type )
+                    if(job_type.job_type in ["CEO" , 'Warehouse Administrator']):
                         return Response({
                             "job_type": "You do not have permission to change the job type."
                         }) 
@@ -68,6 +66,9 @@ class EmployeeApiView( generics.RetrieveAPIView, generics.DestroyAPIView , gener
         employee.gender = data['gender']
         employee.salary= data['salary']
         employee.address = data['address']
+        employee.branch = data['branch']
+        employee.phone = data['phone']
+        
         employee.date_of_employment= data['date_of_employment']
         employee.job_type= Job_Type.objects.get(id=data['job_type'])  
         employee.save()
@@ -166,5 +167,37 @@ class CityAPIView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.
     queryset= City.objects.all()
     permission_classes=[IsCEO]
     serializer_class = CitySerializer
+    
+class CustomersApiView(generics.ListCreateAPIView):
+    queryset=Customer.objects.all()
+    serializer_class=CustomerSerializer
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend]
+    filterset_fields=['national_number','first_name','middle_name','last_name']
+    search_fields = ['national_number','first_name','last_name'] 
+    ordering_fields = ['first_name' , 'id']
+
+class CustomerApiView(generics.RetrieveUpdateDestroyAPIView):
+    queryset=Customer.objects.all()
+    serializer_class=CustomerSerializer
+#----------------
+#---product----
+
+class ProductsApiview(generics.ListCreateAPIView):
+    queryset=Product.objects.all()      
+    serializer_class=ProductSerializer
+
+class ProductApiview(generics.RetrieveUpdateDestroyAPIView):
+    queryset=Product.objects.all()
+    serializer_class=ProductSerializer
+
+class ProductscategoriesApiView(generics.ListCreateAPIView):
+    queryset=Products_Categories.objects.all()
+    serializer_class=ProductCategorySerializer
+
+class ProductcategoryApiView(generics.RetrieveUpdateDestroyAPIView):
+    queryset=Products_Categories.objects.all()
+    serializer_class=ProductCategorySerializer
+
         
     

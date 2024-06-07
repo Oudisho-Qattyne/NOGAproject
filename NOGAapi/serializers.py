@@ -15,7 +15,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     job_type_title=serializers.StringRelatedField(source='job_type')
     class Meta:
         model=Employee
-        fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','date_of_employment','birth_date','gender','job_type' , 'job_type_title']
+        fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','date_of_employment','birth_date','gender','job_type' , 'job_type_title' , 'branch' , 'phone']
         extra_kwargs = {
             "job_type_title" : {'read_only' : True},
             "job_type" : {'write_only' : True,
@@ -88,3 +88,26 @@ class CitySerializer(serializers.ModelSerializer):
     class Meta:
         model = City
         fields = ["id" , "city_name"]
+        
+        
+        
+        
+class CustomerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Customer
+        fields=['national_number','first_name','middle_name','last_name','phone','gender']
+
+class ProductCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Products_Categories
+        fields=['id','category_name']
+
+
+class ProductSerializer(serializers.ModelSerializer):
+    category_types=serializers.StringRelatedField(
+        source='category_name'
+    )
+    class Meta:
+        model=Product
+        fields=['product_name','wholesale_price','selling_price','quantity','category_type','category_types']
+
