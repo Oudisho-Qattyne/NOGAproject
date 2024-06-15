@@ -57,24 +57,26 @@ class EmployeeApiView( generics.RetrieveAPIView, generics.DestroyAPIView , gener
                         return Response({
                             "job_type": "You do not have permission to change the job type."
                         }) 
-        employee.national_number= data['national_number']
-        employee.first_name= data['first_name']
-        employee.middle_name= data['middle_name']
-        employee.last_name= data['last_name']
-        employee.email= data['email']
-        employee.birth_date= data['birth_date']
-        employee.gender = data['gender']
-        employee.salary= data['salary']
-        employee.address = data['address']
-        employee.branch = data['branch']
-        employee.phone = data['phone']
+                        
+        return self.update(request, *args, **kwargs)
+        # employee.national_number= data['national_number']
+        # employee.first_name= data['first_name']
+        # employee.middle_name= data['middle_name']
+        # employee.last_name= data['last_name']
+        # employee.email= data['email']
+        # employee.birth_date= data['birth_date']
+        # employee.gender = data['gender']
+        # employee.salary= data['salary']
+        # employee.address = data['address']
+        # employee.branch = data['branch']
+        # employee.phone = data['phone']
         
-        employee.date_of_employment= data['date_of_employment']
-        employee.job_type= Job_Type.objects.get(id=data['job_type'])  
-        employee.save()
-        serialized_data = EmployeeSerializer(employee)
-        # serialized_data.is_valid(raise_exception=True)
-        return Response(serialized_data.data)
+        # employee.date_of_employment= data['date_of_employment']
+        # employee.job_type= Job_Type.objects.get(id=data['job_type'])  
+        # employee.save()
+        # serialized_data = EmployeeSerializer(employee)
+        # # serialized_data.is_valid(raise_exception=True)
+        # return Response(serialized_data.data)
 #--------EndEmp----------
 
 #-------Auth-------------
@@ -134,6 +136,8 @@ class UserApiView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.
     #         return Response(serializedUser.data , status=status.HTTP_200_OK)
     #     else:
     #         return Response({"message" : "something went wrong"})
+
+
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class=MyTokenObtainPairSerializer
     
