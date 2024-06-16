@@ -22,8 +22,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
                           "required":True
                           },
         }
-
-
 class UserSerializer(serializers.ModelSerializer):
     # employee=EmployeeSerializer()
     
@@ -79,9 +77,11 @@ class BranchSerializer(serializers.ModelSerializer):
          }
         
     def create(self, validated_data):
-        numberOfBranches = Branch.objects.filter(city=validated_data['city']).count()
+        branches = Branch.objects.filter(city=validated_data['city'])
+        branchesOrdered = branches.order_by('number')
+        maxNumber = branchesOrdered[len(branchesOrdered)-1].number 
         branch = self.Meta.model(**validated_data)
-        branch.number = numberOfBranches + 1
+        branch.number =  maxNumber +  1
         branch.save()
         return branch
     

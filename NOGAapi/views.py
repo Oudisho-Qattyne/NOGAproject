@@ -12,7 +12,7 @@ from rest_framework import exceptions
 from rest_framework.permissions import IsAuthenticated 
 from rest_framework_simplejwt.views import TokenObtainPairView 
 from .authentication import create_access_token , create_refresh_token
-from .permissions import IsManager , IsHR , IsSalesOfficer , IsCEO , IsSalesOfficerOrCEO , IsHROrCEO
+from .permissions import *
 from .pagenation import Paginator
 # Create your views here.
 # --------Employees---------
@@ -36,29 +36,29 @@ class Job_TypeView( generics.RetrieveAPIView, generics.DestroyAPIView , generics
 class EmployeesApiView(generics.ListAPIView,generics.ListCreateAPIView):
     queryset=Employee.objects.all()
     serializer_class=EmployeeSerializer
-    permission_classes=[IsHROrCEO]
+    permission_classes=[IsHROrCEO , PermissionOnEmployees]
     filter_backends=[filter.DjangoFilterBackend]
     filterset_fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','gender','job_type' , 'branch' , 'phone']
     
 
 class EmployeeApiView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.UpdateAPIView ):
     queryset=Employee.objects.all()
-    permission_classes=[IsHROrCEO]
+    permission_classes=[IsHROrCEO , PermissionOnEmployees]
     serializer_class=EmployeeSerializer  
     
-    def put(self, request, *args, **kwargs):
-        employee = self.get_object()
-        data = request.data
-        job_type = Job_Type.objects.get(id = data['job_type'])
-        if(not request.user.is_staff):
-            if(hasattr(request.user.employee , 'job_type')):
-                if(request.user.employee.job_type.job_type == "HR"):
-                    if(job_type.job_type in ["CEO" , 'Warehouse Administrator']):
-                        return Response({
-                            "job_type": "You do not have permission to change the job type."
-                        }) 
+    # def put(self, request, *args, **kwargs):
+    #     employee = self.get_object()
+    #     data = request.data
+    #     job_type = Job_Type.objects.get(id = data['job_type'])
+    #     if(not request.user.is_staff):
+    #         if(hasattr(request.user.employee , 'job_type')):
+    #             if(request.user.employee.job_type.job_type == "HR"):
+    #                 if(job_type.job_type in ["CEO" , 'Warehouse Administrator']):
+    #                     return Response({
+    #                         "job_type": "You do not have permission to change the job type."
+    #                     }) 
                         
-        return self.update(request, *args, **kwargs)
+    #     return self.update(request, *args, **kwargs)
         # employee.national_number= data['national_number']
         # employee.first_name= data['first_name']
         # employee.middle_name= data['middle_name']
@@ -119,7 +119,7 @@ class LoginAPIView(APIView):
 class UsersApiView(generics.ListAPIView ):
     queryset= User.objects.all()
     serializer_class = UserSerializer
-    permission_classes=[IsCEO]
+    permission_classes=[IsHROrCEO]
     filter_backends = [filter.DjangoFilterBackend , filters.SearchFilter , filters.OrderingFilter]
     filterset_fields = ['username']
     search_fields = ['username']
