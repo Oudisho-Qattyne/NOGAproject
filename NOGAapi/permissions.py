@@ -72,15 +72,15 @@ class PermissionOnEmployees(BasePermission):
                     elif('job_type' in request.data and request.data['job_type'] in [1 , 2 , 3]):
                         raise PermissionDenied("You do not have permission to add/update employee with this job type")            
 
-                    elif(hasattr(obj , 'job_type') and obj.job_type.job_type=='Manager'):
-                        print(obj.id)
-                        branches = Branch.objects.all()
-                        relatedBranches = branches.filter(manager= obj.id)
-                        if(len(relatedBranches) > 0 ):
-                            # self.message = 
-                            raise PermissionDenied("this employee is a manager to a branche , change the manager on this branch then edit this employee")            
-                        else:
-                            return True
+                    # elif(hasattr(obj , 'job_type') and obj.job_type.job_type=='Manager'):
+                    #     print(obj.id)
+                    #     branches = Branch.objects.all()
+                    #     relatedBranches = branches.filter(manager= obj.id)
+                    #     if(len(relatedBranches) > 0 ):
+                    #         # self.message = 
+                    #         raise PermissionDenied("this employee is a manager to a branche , change the manager on this branch then edit this employee")            
+                    #     else:
+                    #         return True
                     else:
                         return True
                 elif(hasattr(request.user.employee , 'job_type') and request.user.employee.job_type.job_type == 'CEO'):

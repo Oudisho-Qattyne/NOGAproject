@@ -22,6 +22,17 @@ class EmployeeSerializer(serializers.ModelSerializer):
                           "required":True
                           },
         }
+        
+    def validate(self, attrs):
+        request= self.context['request']
+        if request.method == 'PUT':
+            print()
+            if self.instance.job_type.job_type == "Manager":
+                branches = Branch.objects.all()
+                relatedBranches = branches.filter(manager= self.instance.id)
+                if(len(relatedBranches) > 0 ):
+                    raise serializers.ValidationError({'manager' : ['this employee is a manager to a branche , change the manager on this branch then edit this employee']})
+        return super().validate(attrs)
 class UserSerializer(serializers.ModelSerializer):
     # employee=EmployeeSerializer()
     
