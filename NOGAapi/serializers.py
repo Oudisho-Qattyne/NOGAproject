@@ -74,8 +74,17 @@ class BranchSerializer(serializers.ModelSerializer):
         fields = ["id" , "number" , "location" ,"city" , "area" , "street" , "manager"]
         extra_kwargs = {
          "city" : {"required" : True},
-         "manager" : {"required" : True}
+         "manager" : {"required" : True},
+         "number" : {"read_only" : True}
          }
+        
+    def create(self, validated_data):
+        numberOfBranches = Branch.objects.filter(city=validated_data['city']).count()
+        branch = self.Meta.model(**validated_data)
+        branch.number = numberOfBranches + 1
+        branch.save()
+        return branch
+    
     def validate(self, attrs):
         if(bool(attrs["manager"].job_type.job_type == "Manager")):
             return super().validate(attrs)

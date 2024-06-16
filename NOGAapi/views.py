@@ -152,10 +152,12 @@ class BranchsAPIView(generics.ListAPIView , generics.ListCreateAPIView ):
     search_fields = ["id" , "number" , "location"  , "area" , "street" ]
     ordering_fields = ["id" , "number" ,"city" , "area" , "street" , "manager"]
     
+    
 class BranchAPIView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.UpdateAPIView ):
     queryset= Branch.objects.all()
     permission_classes=[IsCEO]
     serializer_class = BranchSerializer
+    
     
     
 class CitiesAPIView(generics.ListAPIView , generics.ListCreateAPIView ):
