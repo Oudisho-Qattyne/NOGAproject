@@ -3,7 +3,9 @@ from django.contrib.auth.models import AbstractUser
 # Create your models here.
 
 class City(models.Model):
-    city_name = models.CharField(max_length=100)
+    def __str__(self) -> str:
+        return self.city_name
+    city_name = models.CharField(max_length=100 , unique=True)
     
 class Branch(models.Model):
     number = models.IntegerField()
@@ -19,6 +21,8 @@ class Job_Type(models.Model):
         return self.job_type
         
 class Employee(models.Model):
+    def __str__(self) -> str:
+        return self.first_name + " " + self.middle_name + " " + self.last_name
     national_number=models.IntegerField(unique=True)
     first_name=models.CharField(max_length=100)
     middle_name=models.CharField(max_length=100)
@@ -49,7 +53,7 @@ class User(AbstractUser):
 # "employee":1
 # }
     
-class UserEmployee(models.Model):
+class User_Employee(models.Model):
     user = models.OneToOneField(User , on_delete=models.PROTECT)
     employee = models.OneToOneField(Employee , on_delete=models.PROTECT)
     
@@ -68,6 +72,8 @@ class Products_Categories(models.Model):
         return self.category_name
 
 class Product(models.Model):
+    def __str__(self) -> str:
+        return self.product_name
     product_name=models.CharField(max_length=100)
     wholesale_price=models.IntegerField()
     selling_price=models.IntegerField()
@@ -75,6 +81,61 @@ class Product(models.Model):
     category_type=models.ForeignKey(Products_Categories,on_delete=models.PROTECT,default=1)
 
 
+#----new----
+class Phone_Brand(models.Model):
+    def __str__(self) -> str:
+        return self.brand_name
+    # brand_id=models.IntegerField(primary_key=True)
+    brand_name=models.CharField(max_length=20 , unique=True)
+
+class Color(models.Model):
+    def __str__(self) -> str:
+        return self.color
+    # color_id=models.IntegerField(primary_key=True)
+    color=models.CharField(max_length=20 , unique=True)
+
+class CPU(models.Model):
+    def __str__(self) -> str:
+        return self.CPU_brand
+    # CPU_id=models.IntegerField(primary_key=True)
+    CPU_brand=models.CharField(max_length=50 , unique=True)
+
+
+class Phone(models.Model):
+    product_id=models.OneToOneField(Product,on_delete=models.CASCADE)
+    CPU_name=models.CharField(max_length=50)
+    RAM=models.IntegerField()
+    storage=models.IntegerField()
+    battery=models.IntegerField()
+    sim=models.IntegerField()
+    display_size=models.FloatField()
+    sd_card=models.BooleanField()
+    description=models.CharField(max_length=200)
+    release_date=models.DateField()
+    brand_id=models.ForeignKey(Phone_Brand,on_delete=models.CASCADE)
+    CPU_id=models.ForeignKey(CPU,on_delete=models.CASCADE)
+    color_id=models.ForeignKey(Color,on_delete=models.CASCADE)
+
+class Phone_Cameras(models.Model):
+    product_id=models.ForeignKey(Phone,on_delete=models.CASCADE)
+    camera_resolution=models.FloatField()
+    main=models.BooleanField()
+
+class Accessory_Category(models.Model):
+    def __str__(self):
+        return self.category_name
+    # accessory_category=models.IntegerField(primary_key=True)
+    category_name=models.CharField(max_length=20)
+ 
+class Accessory(models.Model):
+    product_id=models.OneToOneField(Product,on_delete=models.CASCADE)
+    description=models.CharField(max_length=200)
+    accessory_category=models.ForeignKey(Accessory_Category,on_delete=models.CASCADE)
+
+
+class Phones_Accessories(models.Model):
+    phone_id=models.ForeignKey(Phone,on_delete=models.CASCADE)
+    accessor_id=models.ForeignKey(Accessory,on_delete=models.CASCADE)
 
 
     

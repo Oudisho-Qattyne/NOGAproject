@@ -17,6 +17,9 @@ urlpatterns = [
     path('employees',EmployeesApiView.as_view()),
     path('employees/<int:pk>' , EmployeeApiView.as_view() ),
     
+    path('available_managers' , getAvailableManagers),
+    
+    
     path('job-types',Job_TypesView.as_view()),
     path('job-types/<int:pk>' , Job_TypeView.as_view() ),
     
@@ -26,16 +29,44 @@ urlpatterns = [
     path('cities',CitiesAPIView.as_view()),
     path('cities/<int:pk>' , CityAPIView.as_view() ),
     
-    path('customer',CustomersApiView.as_view()),
-    path('customer/<int:pk>',CustomerApiView.as_view()),
+    path('customers',CustomersApiView.as_view()),
+    path('customers/<int:pk>',CustomerApiView.as_view()),
     
     path('products/',ProductsApiview.as_view()),
-    path('product/<int:pk>',ProductApiview.as_view()),
+    path('products/<int:pk>',ProductApiview.as_view()),
     
-    path('products_categories/',ProductscategoriesApiView.as_view()),
-    path('product_category/<int:pk>',ProductcategoryApiView.as_view()),
+    path('products_categories/',ProductsCategoriesApiView.as_view()),
+    path('products_categories/<int:pk>',ProductCategoryApiView.as_view()),
     
     path('login', MyTokenObtainPairView.as_view() , name='token_obtain_pair'),
-    path('refresh', TokenRefreshView.as_view(), name='token_refresh')
+    path('refresh', TokenRefreshView.as_view(), name='token_refresh'),
     
+    #products 
+
+# ----------------------Phone Brands------------------------
+
+    path('phone_brands' , PhoneBrandsAPIView.as_view()),
+    path('phone_brands/<int:pk>' , PhoneBrandAPIView.as_view()),
+    
+# -----------------------Colors-----------------------
+    
+    path('colors' , ColorsAPIView.as_view()),
+    path('colors/<int:pk>' , ColorAPIView.as_view()),
+    
+# -----------------------CPU-----------------------
+    
+    path('cpus' , CPUsAPIView.as_view()),
+    path('cpus/<int:pk>' , CPUAPIView.as_view()),
+    
+# -----------------------Phone-----------------------
+    
+    path('phones' , PhonesAPIView.as_view()),
+    path('phones/<int:pk>' , PhoneAPIView.as_view()),
+    
+# -----------------------Accessory-----------------------
+
+    path('Accessories' , AccessoriesAPIView.as_view()),
+    path('Accessories/<int:pk>' , AccessoryAPIView.as_view()),
+    
+# -----------------------Accessory category-----------------------
 ]

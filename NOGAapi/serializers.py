@@ -26,7 +26,6 @@ class EmployeeSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         request= self.context['request']
         if request.method == 'PUT':
-            print()
             if self.instance.job_type.job_type == "Manager":
                 branches = Branch.objects.all()
                 relatedBranches = branches.filter(manager= self.instance.id)
@@ -78,13 +77,27 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         return data
    
 class BranchSerializer(serializers.ModelSerializer):
+    city_name = serializers.StringRelatedField(source='city')
+    manager_name = serializers.StringRelatedField(source='manager')
     class Meta:
         model = Branch
-        fields = ["id" , "number" , "location" ,"city" , "area" , "street" , "manager"]
+        fields = ["id" , "number" , "location" ,"city" , "area" , "street" , "manager" , "city_name" , 'manager_name']
         extra_kwargs = {
-         "city" : {"required" : True},
-         "manager" : {"required" : True},
-         "number" : {"read_only" : True}
+         "city" : {
+            "required" : True,
+            'write_only':True
+            },
+         "manager" : {
+            "required" : True,
+            # 'write_only':True
+            },
+         "number" : {"read_only" : True},
+         "city_name":{
+            "read_only" : True
+             } ,
+         'manager_name' : {
+            "read_only" : True
+         }
          }
         
     def create(self, validated_data):
@@ -94,6 +107,10 @@ class BranchSerializer(serializers.ModelSerializer):
         branch = self.Meta.model(**validated_data)
         branch.number =  maxNumber +  1
         branch.save()
+        manager = Employee.objects.get(id = branch.manager.id)
+        manager.branch = branch
+        manager.save()
+
         return branch
     
     def validate(self, attrs):
@@ -124,10 +141,83 @@ class ProductCategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    category_types=serializers.StringRelatedField(
-        source='category_name'
+    category_name=serializers.StringRelatedField(
+        source='category_type'
     )
     class Meta:
         model=Product
-        fields=['product_name','wholesale_price','selling_price','quantity','category_type','category_types']
+        fields=['id' , 'product_name','wholesale_price','selling_price','quantity','category_type','category_name']
+        extra_kwargs={
+            'category_name' : {
+                'read_only' : True,
+            },
+            'category_type' : {
+                'write_only' : True,
+                'required' : True
+            }
+        }
 
+class PhoneBrandSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Phone_Brand
+        fields=['id' , 'brand_name']
+        
+class ColorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Color
+        fields=['id' , 'color']
+        
+class CPUSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=CPU
+        fields=['id' , 'CPU_brand']
+        
+class PhoneSerializer(serializers.ModelSerializer):
+    brand = serializers.StringRelatedField(source='brand_id')
+    CPU = serializers.StringRelatedField(source='CPU_id')
+    color = serializers.StringRelatedField(source='color_id')
+    class Meta:
+        model=Phone
+        fields=['product_id' , 'CPU_name' , 'RAM' , 'storage' , 'battery' , 'sim' , 'display_size' , 'sd_card' , 'description' , 'release_date' , 'brand_id' , 'CPU_id' , 'color_id' , 'brand' , 'CPU' , 'color']
+        extra_kwargs={
+            'brand':{
+                'read_only': True,
+            },
+            'CPU':{
+                'read_only': True,
+            },
+            'color':{
+                'read_only': True,
+            },
+            'brand_id':{
+                'write_only': True,
+                'required':True
+            },
+            'CPU_id':{
+                'write_only': True,
+                'required':True
+            },
+            'color_id':{
+                'write_only': True,
+                'required':True
+            },
+        }
+class AccessoryCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Accessory_Category
+        fields=['id' , 'category_name']
+        
+class AccessorySerializer(serializers.ModelSerializer):
+    category_name = serializers.StringRelatedField(source='accessory_category')
+    class Meta:
+        model=Accessory
+        fields=['product_id' , 'description' , 'accessory_category'  , 'category_name']
+        extra_kwargs={
+            'accessory_category':{
+                'write_only' : True,
+                'required':True
+            },
+            'category_name':{
+                'read_only' : True
+            }
+        }

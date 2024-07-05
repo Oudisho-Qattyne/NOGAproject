@@ -35,6 +35,18 @@ class IsHR(BasePermission):
                     isHR = bool(request.user.employee.job_type.job_type == 'HR')
                 return bool(request.user and request.user.is_authenticated and isHR )
             
+class IsWarehouseAdministrator(BasePermission):
+    def has_permission(self, request, view):
+        if(bool(request.user and request.user.is_staff)):
+            return True
+        else:
+            isWarehouseAdministrator = False
+            if( request.user and hasattr(request.user, 'employee')):
+                if(hasattr(request.user.employee , 'job_type')):
+                    isWarehouseAdministrator = bool(request.user.employee.job_type.job_type == 'Warehouse Administrator')
+                return bool(request.user and request.user.is_authenticated and isWarehouseAdministrator )        
+            
+                
 class PermissionOnEmployees(BasePermission):
     def has_permission(self, request, view):
         if(bool(request.user and request.user.is_staff)):

@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework import generics
 from .serializers import UserSerializer
@@ -15,12 +16,16 @@ from .authentication import create_access_token , create_refresh_token
 from .permissions import *
 from .pagenation import Paginator
 # Create your views here.
-# --------Employees---------
+
+
+# ----------------------job type------------------------
+
 
 class Job_TypesView(generics.ListAPIView,generics.ListCreateAPIView ):
     queryset=Job_Type.objects.all()
     serializer_class=Job_TypeSerializer
     permission_classes=[IsCEO]
+    pagination_class = Paginator
     filter_backends=[filter.DjangoFilterBackend]
     filterset_fields=['id','job_type']
 
@@ -32,12 +37,15 @@ class Job_TypeView( generics.RetrieveAPIView, generics.DestroyAPIView , generics
     # def destroy(self, request, *args, **kwargs):
     #     print(self)
     #     # return super().destroy(request, *args, **kwargs)
+
+# ----------------------employee------------------------
     
 class EmployeesApiView(generics.ListAPIView,generics.ListCreateAPIView):
     queryset=Employee.objects.all()
     serializer_class=EmployeeSerializer
     permission_classes=[IsHROrCEO , PermissionOnEmployees]
-    filter_backends=[filter.DjangoFilterBackend]
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend , filters.SearchFilter , filters.OrderingFilter]
     filterset_fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','gender','job_type' , 'branch' , 'phone']
     
 
@@ -79,7 +87,8 @@ class EmployeeApiView( generics.RetrieveAPIView, generics.DestroyAPIView , gener
         # return Response(serialized_data.data)
 #--------EndEmp----------
 
-#-------Auth-------------
+# ----------------------auth------------------------
+
 class RrgisterAPIView(APIView):
     permission_classes=[IsHROrCEO]
     def post(self , requset):
@@ -114,12 +123,14 @@ class LoginAPIView(APIView):
             "access_token": access_token,
             "refresh_token" : refresh_token
             })
-#-------EndAuth-------------
+
+# ----------------------user------------------------
     
 class UsersApiView(generics.ListAPIView ):
     queryset= User.objects.all()
     serializer_class = UserSerializer
     permission_classes=[IsHROrCEO]
+    pagination_class = Paginator
     filter_backends = [filter.DjangoFilterBackend , filters.SearchFilter , filters.OrderingFilter]
     filterset_fields = ['username']
     search_fields = ['username']
@@ -141,12 +152,14 @@ class UserApiView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class=MyTokenObtainPairSerializer
     
+# ----------------------branch------------------------
     
 
 class BranchsAPIView(generics.ListAPIView , generics.ListCreateAPIView ):
     queryset= Branch.objects.all()
     serializer_class = BranchSerializer
     permission_classes=[IsCEO]
+    pagination_class = Paginator
     filter_backends = [filter.DjangoFilterBackend , filters.SearchFilter , filters.OrderingFilter]
     filterset_fields = ["id" , "number" ,"city" , "area" , "street" , "manager"]
     search_fields = ["id" , "number" , "location"  , "area" , "street" ]
@@ -157,14 +170,40 @@ class BranchAPIView( generics.RetrieveAPIView, generics.DestroyAPIView , generic
     queryset= Branch.objects.all()
     permission_classes=[IsCEO]
     serializer_class = BranchSerializer
+
+@api_view(['GET'])
+def getAvailableManagers(request):
+    employees = Employee.objects.all()
+    managers = employees.filter(job_type = 4)
+    serializedManagers = EmployeeSerializer(managers , many=True)
+    managers = serializedManagers.data
+    
+    branches = Branch.objects.all()
+    serializedBranches = BranchSerializer(branches , many=True)
+    branches = serializedBranches.data
+    
+    unAvailableManagers = [branch['manager'] for branch in branches ]
+    availableManagers = [manager for manager in managers if manager['id'] not in unAvailableManagers ]
     
     
+    
+    # managers = Employee.objects.all()
+    # availableManagers = managers.filter(job_type = 4 , branch = "null")
+    # availableManagers = EmployeeSerializer(availableManagers , many=True)
+    # print(availableManagers.data)
+    return Response({
+        "results" : availableManagers
+    })
+    
+    
+# ----------------------city------------------------
     
 class CitiesAPIView(generics.ListAPIView , generics.ListCreateAPIView ):
     queryset= City.objects.all()
     permission_classes=[IsCEO]
     serializer_class = CitySerializer
     filter_backends = [filter.DjangoFilterBackend , filters.SearchFilter , filters.OrderingFilter]
+    pagination_class = Paginator
     filterset_fields = ["id" ,"city_name"]
     search_fields = ["id" , "city_name"]
     ordering_fields = ["id" ,"city_name"]
@@ -174,11 +213,13 @@ class CityAPIView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.
     permission_classes=[IsCEO]
     serializer_class = CitySerializer
     
+# ----------------------customer------------------------
+    
 class CustomersApiView(generics.ListCreateAPIView):
     queryset=Customer.objects.all()
     serializer_class=CustomerSerializer
     pagination_class = Paginator
-    filter_backends=[filter.DjangoFilterBackend]
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
     filterset_fields=['national_number','first_name','middle_name','last_name']
     search_fields = ['national_number','first_name','last_name'] 
     ordering_fields = ['first_name' , 'id']
@@ -186,24 +227,151 @@ class CustomersApiView(generics.ListCreateAPIView):
 class CustomerApiView(generics.RetrieveUpdateDestroyAPIView):
     queryset=Customer.objects.all()
     serializer_class=CustomerSerializer
-#----------------
-#---product----
+    
+    
+# ----------------------products------------------------
+
 
 class ProductsApiview(generics.ListCreateAPIView):
     queryset=Product.objects.all()      
     serializer_class=ProductSerializer
+    permission_classes=[IsWarehouseAdministrator]
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields=['product_name','wholesale_price','selling_price','quantity' , 'category_type']
+    search_fields = ['product_name','wholesale_price','selling_price','quantity' , 'category_type'] 
+    ordering_fields = ['product_name','wholesale_price','selling_price','quantity' , 'category_type']
 
 class ProductApiview(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes=[IsWarehouseAdministrator]
     queryset=Product.objects.all()
     serializer_class=ProductSerializer
+# ----------------------product categories------------------------
 
-class ProductscategoriesApiView(generics.ListCreateAPIView):
+class ProductsCategoriesApiView(generics.ListCreateAPIView):
+    queryset=Products_Categories.objects.all()
+    permission_classes=[IsWarehouseAdministrator]
+    serializer_class=ProductCategorySerializer
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields=['category_name']
+    search_fields = ['category_name']
+    ordering_fields = ['category_name' , 'id']
+
+class ProductCategoryApiView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes=[IsWarehouseAdministrator]
     queryset=Products_Categories.objects.all()
     serializer_class=ProductCategorySerializer
+    
+    
+#products 
 
-class ProductcategoryApiView(generics.RetrieveUpdateDestroyAPIView):
-    queryset=Products_Categories.objects.all()
-    serializer_class=ProductCategorySerializer
+# ----------------------Phone Brands------------------------
+
+
+class PhoneBrandsAPIView(generics.ListCreateAPIView):
+    permission_classes=[IsWarehouseAdministrator]
+    queryset=Phone_Brand.objects.all()
+    serializer_class=PhoneBrandSerializer
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields=['brand_name']
+    search_fields = ['brand_name']
+    ordering_fields = ['brand_name' , 'id']
+    
+class PhoneBrandAPIView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes=[IsWarehouseAdministrator]
+    queryset=Phone_Brand.objects.all()
+    serializer_class=PhoneBrandSerializer
 
         
+# -----------------------Colors-----------------------
+
+class ColorsAPIView(generics.ListCreateAPIView):
+    permission_classes=[IsWarehouseAdministrator]
+    queryset=Color.objects.all()
+    serializer_class=ColorSerializer
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields=['color']
+    search_fields = ['color']
+    ordering_fields = ['color' , 'id']
+    
+class ColorAPIView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes=[IsWarehouseAdministrator]
+    queryset=Color.objects.all()
+    serializer_class=ColorSerializer
+    
+# -----------------------CPU-----------------------
+
+class CPUsAPIView(generics.ListCreateAPIView):
+    permission_classes=[IsWarehouseAdministrator]
+    queryset=CPU.objects.all()
+    serializer_class=CPUSerializer
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields=['CPU_brand']
+    search_fields = ['CPU_brand']
+    ordering_fields = ['CPU_brand' , 'id']
+    
+class CPUAPIView(generics.RetrieveUpdateDestroyAPIView):
+    queryset=CPU.objects.all()
+    serializer_class=CPUSerializer
+    
+# -----------------------Phone-----------------------
+
+
+
+
+class PhonesAPIView(generics.ListCreateAPIView):
+    permission_classes=[IsWarehouseAdministrator]
+    queryset=Phone.objects.all()
+    serializer_class=PhoneSerializer
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields=['CPU_name' , 'RAM' , 'storage' , 'battery' , 'sim' , 'display_size' , 'sd_card' , 'description' , 'release_date' , 'brand_id' , 'CPU_id' , 'color_id'  ]
+    search_fields = ['CPU_name' , 'RAM' , 'storage' , 'battery' , 'sim' , 'display_size' , 'sd_card' , 'description' , 'release_date' , 'brand_id' , 'CPU_id' , 'color_id' ] 
+    ordering_fields = ['CPU_name' , 'RAM' , 'storage' , 'battery' , 'sim' , 'display_size' , 'sd_card' , 'description' , 'release_date' , 'brand_id' , 'CPU_id' , 'color_id' ]
+    
+class PhoneAPIView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes=[IsWarehouseAdministrator]
+    queryset=Phone.objects.all()
+    serializer_class=PhoneSerializer
+    
+    
+# -----------------------Accessory-----------------------
+
+class AccessoriesAPIView(generics.ListCreateAPIView):
+    permission_classes=[IsWarehouseAdministrator]
+    queryset=Accessory.objects.all()
+    serializer_class=AccessorySerializer
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields=['product_id' , 'description' , 'accessory_category']
+    search_fields = ['product_id' , 'description' , 'accessory_category'] 
+    ordering_fields = ['product_id' , 'description' , 'accessory_category']
+    
+class AccessoryAPIView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes=[IsWarehouseAdministrator]
+    queryset=Accessory.objects.all()
+    serializer_class=AccessorySerializer
+    
+    
+# -----------------------Accessory category-----------------------
+    
+class AccessoriesCategoriesAPIView(generics.ListCreateAPIView):
+    permission_classes=[IsWarehouseAdministrator]
+    queryset=Accessory.objects.all()
+    serializer_class=AccessorySerializer
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields=['category_name' ]
+    search_fields =['category_name' , 'id']
+    ordering_fields = ['category_name' , 'id']
+    
+class AccessoriesCategoriesAPIView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes=[IsWarehouseAdministrator]
+    queryset=Accessory.objects.all()
+    serializer_class=AccessorySerializer
+    
     
