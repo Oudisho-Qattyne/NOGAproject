@@ -238,7 +238,7 @@ class ProductsApiview(generics.ListCreateAPIView):
     permission_classes=[IsWarehouseAdministrator]
     pagination_class = Paginator
     filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
-    filterset_fields=['product_name','wholesale_price','selling_price','quantity' , 'category_type']
+    filterset_fields=['product_name','wholesale_price','selling_price','quantity' , 'category_type' , 'phone__RAM']
     search_fields = ['product_name','wholesale_price','selling_price','quantity' , 'category_type'] 
     ordering_fields = ['product_name','wholesale_price','selling_price','quantity' , 'category_type']
     # def get(self, request, *args, **kwargs):
