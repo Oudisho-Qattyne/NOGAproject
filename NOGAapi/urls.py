@@ -65,8 +65,17 @@ urlpatterns = [
     
 # -----------------------Accessory-----------------------
 
-    path('Accessories' , AccessoriesAPIView.as_view()),
-    path('Accessories/<int:pk>' , AccessoryAPIView.as_view()),
+    path('accessories' , AccessoriesAPIView.as_view()),
+    path('accessories/<int:pk>' , AccessoryAPIView.as_view()),
     
 # -----------------------Accessory category-----------------------
+
+    path('accessories_categories' , AccessoriesCategoriesAPIView.as_view()),
+    path('accessories_categories/<int:pk>' , AccessoryCategoryAPIView.as_view()),
+    
+    
+# -----------------------Products-----------------------
+    
+    path('products' , ProductsApiview.as_view()),
+    # path('products/<int:pk>' , fullProductAPIView),
 ]

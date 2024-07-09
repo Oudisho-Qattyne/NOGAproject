@@ -35,7 +35,7 @@ class Employee(models.Model):
     phone=models.CharField(max_length=100)
     date_of_employment=models.DateField()
     job_type=models.ForeignKey(Job_Type,on_delete=models.PROTECT,default=1)        
-    branch = models.ForeignKey(Branch ,on_delete=models.PROTECT , null=True)
+    branch = models.ForeignKey(Branch ,on_delete=models.SET_NULL , null=True)
 
 class User(AbstractUser):
     username = models.CharField(max_length=100 , unique=True)
@@ -125,7 +125,7 @@ class Accessory_Category(models.Model):
     def __str__(self):
         return self.category_name
     # accessory_category=models.IntegerField(primary_key=True)
-    category_name=models.CharField(max_length=20)
+    category_name=models.CharField(max_length=20 , unique=True)
  
 class Accessory(models.Model):
     product_id=models.OneToOneField(Product,on_delete=models.CASCADE)

@@ -233,7 +233,7 @@ class CustomerApiView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class ProductsApiview(generics.ListCreateAPIView):
-    queryset=Product.objects.all()      
+    queryset=Product.objects.all().select_related("phone")
     serializer_class=ProductSerializer
     permission_classes=[IsWarehouseAdministrator]
     pagination_class = Paginator
@@ -241,7 +241,12 @@ class ProductsApiview(generics.ListCreateAPIView):
     filterset_fields=['product_name','wholesale_price','selling_price','quantity' , 'category_type']
     search_fields = ['product_name','wholesale_price','selling_price','quantity' , 'category_type'] 
     ordering_fields = ['product_name','wholesale_price','selling_price','quantity' , 'category_type']
-
+    # def get(self, request, *args, **kwargs):
+    #     queryset=Product.objects.all().select_related("phone")
+    #     s = ProductSerializer(queryset , many=True)
+    #     print(s)
+    #     return Response({"result" : s.data})
+    
 class ProductApiview(generics.RetrieveUpdateDestroyAPIView):
     permission_classes=[IsWarehouseAdministrator]
     queryset=Product.objects.all()
@@ -361,17 +366,37 @@ class AccessoryAPIView(generics.RetrieveUpdateDestroyAPIView):
     
 class AccessoriesCategoriesAPIView(generics.ListCreateAPIView):
     permission_classes=[IsWarehouseAdministrator]
-    queryset=Accessory.objects.all()
-    serializer_class=AccessorySerializer
+    queryset=Accessory_Category.objects.all()
+    serializer_class=AccessoryCategorySerializer
     pagination_class = Paginator
     filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
     filterset_fields=['category_name' ]
     search_fields =['category_name' , 'id']
     ordering_fields = ['category_name' , 'id']
-    
-class AccessoriesCategoriesAPIView(generics.RetrieveUpdateDestroyAPIView):
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+class AccessoryCategoryAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes=[IsWarehouseAdministrator]
-    queryset=Accessory.objects.all()
-    serializer_class=AccessorySerializer
+    queryset=Accessory_Category.objects.all()
+    serializer_class=AccessoryCategorySerializer
+    
+    
+# -----------------------Product------------------------------
+
+
+# @api_view(['GET' , 'POST'])
+# def fullProductAPIView(request):
+#     data = request.data
+#     product = ProductSerializer(data=data)
+#     product.is_valid(raise_exception=True)
+#     print(product.data['category_name'] == 'Phone')
+#     if product.data['category_name'] == 'Phone':
+#         phone = PhoneSerializer(data=data)
+#         phone.is_valid(raise_exception=True)
+#         print(phone.data)
+    
+#     return Response({
+#         "result" : data
+#     })
     
     

@@ -103,9 +103,17 @@ class BranchSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         branches = Branch.objects.filter(city=validated_data['city'])
         branchesOrdered = branches.order_by('number')
-        maxNumber = branchesOrdered[len(branchesOrdered)-1].number 
         branch = self.Meta.model(**validated_data)
-        branch.number =  maxNumber +  1
+        if len(branchesOrdered)>0:
+            print(len(branchesOrdered))
+            print("aaa")
+            maxNumber = branchesOrdered[len(branchesOrdered)-1].number 
+            branch.number =  maxNumber +  1
+        elif len(branchesOrdered)==0:
+            print("vvv")
+            print(len(branchesOrdered))
+            
+            branch.number =  1
         branch.save()
         manager = Employee.objects.get(id = branch.manager.id)
         manager.branch = branch
@@ -140,22 +148,7 @@ class ProductCategorySerializer(serializers.ModelSerializer):
         fields=['id','category_name']
 
 
-class ProductSerializer(serializers.ModelSerializer):
-    category_name=serializers.StringRelatedField(
-        source='category_type'
-    )
-    class Meta:
-        model=Product
-        fields=['id' , 'product_name','wholesale_price','selling_price','quantity','category_type','category_name']
-        extra_kwargs={
-            'category_name' : {
-                'read_only' : True,
-            },
-            'category_type' : {
-                'write_only' : True,
-                'required' : True
-            }
-        }
+
 
 class PhoneBrandSerializer(serializers.ModelSerializer):
     class Meta:
@@ -178,7 +171,7 @@ class PhoneSerializer(serializers.ModelSerializer):
     color = serializers.StringRelatedField(source='color_id')
     class Meta:
         model=Phone
-        fields=['product_id' , 'CPU_name' , 'RAM' , 'storage' , 'battery' , 'sim' , 'display_size' , 'sd_card' , 'description' , 'release_date' , 'brand_id' , 'CPU_id' , 'color_id' , 'brand' , 'CPU' , 'color']
+        fields=[ 'CPU_name' , 'RAM' , 'storage' , 'battery' , 'sim' , 'display_size' , 'sd_card' , 'description' , 'release_date' , 'brand_id' , 'CPU_id' , 'color_id' , 'brand' , 'CPU' , 'color']
         extra_kwargs={
             'brand':{
                 'read_only': True,
@@ -219,5 +212,24 @@ class AccessorySerializer(serializers.ModelSerializer):
             },
             'category_name':{
                 'read_only' : True
+            }
+        }
+        
+        
+class ProductSerializer(serializers.ModelSerializer):
+    category_name=serializers.StringRelatedField(
+        source='category_type'
+    )
+    phone = PhoneSerializer()
+    class Meta:
+        model=Product
+        fields=['id' , 'product_name','wholesale_price','selling_price','quantity','category_type','category_name' , 'phone']
+        extra_kwargs={
+            'category_name' : {
+                'read_only' : True,
+            },
+            'category_type' : {
+                'write_only' : True,
+                'required' : True
             }
         }
