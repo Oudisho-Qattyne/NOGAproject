@@ -18,9 +18,9 @@ class EmployeeSerializer(serializers.ModelSerializer):
         fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','date_of_employment','birth_date','gender','job_type' , 'job_type_title' , 'branch' , 'phone']
         extra_kwargs = {
             "job_type_title" : {'read_only' : True},
-            "job_type" : {'write_only' : True,
-                          "required":True
-                          },
+            "job_type" : {
+                "required":True
+            },
         }
         
     def validate(self, attrs):
@@ -85,13 +85,13 @@ class BranchSerializer(serializers.ModelSerializer):
         extra_kwargs = {
          "city" : {
             "required" : True,
-            'write_only':True
             },
          "manager" : {
             "required" : True,
-            # 'write_only':True
             },
-         "number" : {"read_only" : True},
+         "number" : {
+             "read_only" : True
+             },
          "city_name":{
             "read_only" : True
              } ,
@@ -183,15 +183,12 @@ class PhoneSerializer(serializers.ModelSerializer):
                 'read_only': True,
             },
             'brand_id':{
-                'write_only': True,
                 'required':True
             },
             'CPU_id':{
-                'write_only': True,
                 'required':True
             },
             'color_id':{
-                'write_only': True,
                 'required':True
             },
         }
@@ -204,10 +201,9 @@ class AccessorySerializer(serializers.ModelSerializer):
     category_name = serializers.StringRelatedField(source='accessory_category')
     class Meta:
         model=Accessory
-        fields=['product_id' , 'description' , 'accessory_category'  , 'category_name']
+        fields=['description' , 'accessory_category'  , 'category_name']
         extra_kwargs={
             'accessory_category':{
-                'write_only' : True,
                 'required':True
             },
             'category_name':{
@@ -221,15 +217,15 @@ class ProductSerializer(serializers.ModelSerializer):
         source='category_type'
     )
     phone = PhoneSerializer()
+    accessory = AccessorySerializer()
     class Meta:
         model=Product
-        fields=['id' , 'product_name','wholesale_price','selling_price','quantity','category_type','category_name' , 'phone']
+        fields=['id' , 'product_name','wholesale_price','selling_price','quantity','category_type','category_name' , 'phone' , 'accessory']
         extra_kwargs={
             'category_name' : {
                 'read_only' : True,
             },
             'category_type' : {
-                'write_only' : True,
                 'required' : True
             }
         }

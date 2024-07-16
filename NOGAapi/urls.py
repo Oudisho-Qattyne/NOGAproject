@@ -77,5 +77,5 @@ urlpatterns = [
 # -----------------------Products-----------------------
     
     path('products' , ProductsApiview.as_view()),
-    # path('products/<int:pk>' , fullProductAPIView),
+    path('products/<int:pk>' , ProductApiview.as_view()),
 ]

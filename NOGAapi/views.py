@@ -41,12 +41,14 @@ class Job_TypeView( generics.RetrieveAPIView, generics.DestroyAPIView , generics
 # ----------------------employee------------------------
     
 class EmployeesApiView(generics.ListAPIView,generics.ListCreateAPIView):
-    queryset=Employee.objects.all()
+    queryset=Employee.objects.all().select_related( 'job_type', 'branch', 'manager_of_branch', 'user', 'user_employee')
     serializer_class=EmployeeSerializer
     permission_classes=[IsHROrCEO , PermissionOnEmployees]
     pagination_class = Paginator
     filter_backends=[filter.DjangoFilterBackend , filters.SearchFilter , filters.OrderingFilter]
     filterset_fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','gender','job_type' , 'branch' , 'phone']
+    search_fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','gender' , 'phone' ]
+    ordering_fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','gender','job_type' , 'branch' , 'phone']
     
 
 class EmployeeApiView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.UpdateAPIView ):
@@ -220,9 +222,9 @@ class CustomersApiView(generics.ListCreateAPIView):
     serializer_class=CustomerSerializer
     pagination_class = Paginator
     filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
-    filterset_fields=['national_number','first_name','middle_name','last_name']
+    filterset_fields=['id' ,'national_number','first_name','middle_name','last_name']
     search_fields = ['national_number','first_name','last_name'] 
-    ordering_fields = ['first_name' , 'id']
+    ordering_fields = ['id' ,'national_number','first_name','last_name'] 
 
 class CustomerApiView(generics.RetrieveUpdateDestroyAPIView):
     queryset=Customer.objects.all()
@@ -233,14 +235,14 @@ class CustomerApiView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class ProductsApiview(generics.ListCreateAPIView):
-    queryset=Product.objects.all().select_related("phone")
+    queryset=Product.objects.all().select_related("phone" , 'accessory')
     serializer_class=ProductSerializer
     permission_classes=[IsWarehouseAdministrator]
     pagination_class = Paginator
     filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
-    filterset_fields=['product_name','wholesale_price','selling_price','quantity' , 'category_type' , 'phone__RAM']
-    search_fields = ['product_name','wholesale_price','selling_price','quantity' , 'category_type'] 
-    ordering_fields = ['product_name','wholesale_price','selling_price','quantity' , 'category_type']
+    filterset_fields=['product_name','wholesale_price','selling_price','quantity' , 'category_type' , 'phone__CPU_name' , 'phone__RAM' , 'phone__storage' , 'phone__battery' , 'phone__sim' , 'phone__display_size' , 'phone__sd_card' , 'phone__description' , 'phone__release_date' , 'phone__brand_id' , 'phone__CPU_id' , 'phone__color_id' , 'accessory__description' , 'accessory__accessory_category']
+    search_fields = ['product_name','wholesale_price','selling_price','quantity' , 'category_type' , 'phone__CPU_name' , 'phone__RAM' , 'phone__storage' , 'phone__battery' , 'phone__sim' , 'phone__display_size' , 'phone__sd_card' , 'phone__description' , 'phone__release_date' , 'phone__brand_id' , 'phone__CPU_id' , 'phone__color_id' , 'accessory__description' , 'accessory__accessory_category'] 
+    ordering_fields = ['product_name','wholesale_price','selling_price','quantity' , 'category_type' , 'phone__CPU_name' , 'phone__RAM' , 'phone__storage' , 'phone__battery' , 'phone__sim' , 'phone__display_size' , 'phone__sd_card' , 'phone__description' , 'phone__release_date' , 'phone__brand_id' , 'phone__CPU_id' , 'phone__color_id' , 'accessory__description' , 'accessory__accessory_category']
     # def get(self, request, *args, **kwargs):
     #     queryset=Product.objects.all().select_related("phone")
     #     s = ProductSerializer(queryset , many=True)
