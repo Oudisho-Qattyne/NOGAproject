@@ -18,6 +18,7 @@ class Branch(models.Model):
 class Job_Type(models.Model):
     job_type=models.CharField(max_length=100 , unique=True)
     def __str__(self) -> str:
+        
         return self.job_type
         
 class Employee(models.Model):
