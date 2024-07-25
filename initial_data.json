@@ -1,12 +1,5 @@
 [
     {
-      "model": "NOGAapi.Job_Type",
-      "pk": 1,
-      "fields": {
-        "job_type": "CEO"
-      }
-    },
-    {
         "model":"NOGAapi.Job_Type",
         "pk": 1,
         "fields":{
