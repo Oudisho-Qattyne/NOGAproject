@@ -1,0 +1,44 @@
+[
+    {
+      "model": "NOGAapi.Job_Type",
+      "pk": 1,
+      "fields": {
+        "job_type": "CEO"
+      }
+    },
+    {
+        "model":"NOGAapi.Job_Type",
+        "pk": 1,
+        "fields":{
+            "job_type": "CEO"
+        }
+    },
+    {
+        "model":"NOGAapi.Job_Type",
+        "pk": 2,
+        "fields":{
+            "job_type": "HR"
+        }
+    },
+    {
+        "model":"NOGAapi.Job_Type",
+        "pk": 3,
+        "fields":{
+            "job_type": "Warehouse Administrator"
+        }
+    },
+    {
+        "model":"NOGAapi.Job_Type",
+        "pk": 4,
+        "fields":{
+            "job_type": "Manager"
+        }
+    },
+    {
+        "model":"NOGAapi.Job_Type",
+        "pk": 5,
+        "fields":{
+            "job_type": "Sales Officer"
+        }
+    }
+  ]

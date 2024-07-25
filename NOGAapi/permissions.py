@@ -1,9 +1,12 @@
 from rest_framework.permissions import BasePermission
 from rest_framework.exceptions import PermissionDenied
 from .models import *
+
+SAFE_METHODS = ['GET']
+
 class IsCEO(BasePermission):
     def has_permission(self, request, view):
-        if(bool(request.user and request.user.is_staff)):
+        if(bool( request.method in SAFE_METHODS or request.user and request.user.is_staff)):
             return True
         else:
             isCEO = False
@@ -15,7 +18,7 @@ class IsCEO(BasePermission):
 
 class IsManager(BasePermission):
     def has_permission(self, request, view):
-        if(bool(request.user and request.user.is_staff)):
+        if(bool( request.method in SAFE_METHODS or request.user and request.user.is_staff)):
             return True
         else:
             isManager = False
@@ -26,7 +29,7 @@ class IsManager(BasePermission):
     
 class IsHR(BasePermission):
     def has_permission(self, request, view):
-        if(bool(request.user and request.user.is_staff)):
+        if(bool( request.method in SAFE_METHODS or request.user and request.user.is_staff)):
             return True
         else:
             isHR = False
@@ -36,8 +39,8 @@ class IsHR(BasePermission):
                 return bool(request.user and request.user.is_authenticated and isHR )
             
 class IsWarehouseAdministrator(BasePermission):
-    def has_permission(self, request, view):
-        if(bool(request.user and request.user.is_staff)):
+    def has_permission( self, request, view):
+        if(bool(  request.method in SAFE_METHODS or request.user and request.user.is_staff)):
             return True
         else:
             isWarehouseAdministrator = False
@@ -49,7 +52,7 @@ class IsWarehouseAdministrator(BasePermission):
                 
 class PermissionOnEmployees(BasePermission):
     def has_permission(self, request, view):
-        if(bool(request.user and request.user.is_staff)):
+        if(bool( request.method in SAFE_METHODS or request.user and request.user.is_staff)):
             return True
         else:
             print("not admin")
@@ -71,7 +74,7 @@ class PermissionOnEmployees(BasePermission):
                 
                 
     def has_object_permission(self, request, view, obj):
-        if(bool(request.user and request.user.is_staff)):
+        if(bool(  request.method in SAFE_METHODS or request.user and request.user.is_staff)):
             return True
         else:
             print("not admin")
@@ -110,7 +113,7 @@ class PermissionOnEmployees(BasePermission):
     
 class IsSalesOfficer(BasePermission):
     def has_permission(self, request, view):
-        if(bool(request.user and request.user.is_staff)):
+        if(bool(  request.method in SAFE_METHODS or request.user and request.user.is_staff)):
             return True
         else:
             isSalesOfficer= False
@@ -121,7 +124,7 @@ class IsSalesOfficer(BasePermission):
 
 class IsSalesOfficerOrCEO(BasePermission):
     def has_permission(self, request, view):
-        if(bool(request.user and request.user.is_staff)):
+        if(bool( request.method in SAFE_METHODS or request.user and request.user.is_staff)):
             return True
         else:
             isSalesOfficerOrCEO= False
@@ -133,7 +136,7 @@ class IsSalesOfficerOrCEO(BasePermission):
 
 class IsHROrCEO(BasePermission):
     def has_permission(self, request, view):
-        if(bool(request.user and request.user.is_staff)):
+        if(bool( request.method in SAFE_METHODS or request.user and request.user.is_staff)):
             return True
         else:
             isHROrCEO= False

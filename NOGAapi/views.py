@@ -24,20 +24,30 @@ from .pagenation import Paginator
 class Job_TypesView(generics.ListAPIView,generics.ListCreateAPIView ):
     queryset=Job_Type.objects.all()
     serializer_class=Job_TypeSerializer
-    permission_classes=[IsCEO]
+    permission_classes=[IsHR]
     pagination_class = Paginator
     filter_backends=[filter.DjangoFilterBackend]
     filterset_fields=['id','job_type']
-
-
+  
 class Job_TypeView( generics.RetrieveAPIView, generics.DestroyAPIView , generics.UpdateAPIView ):
     queryset= Job_Type.objects.all()
-    permission_classes=[IsCEO]
+    permission_classes=[IsHR]
     serializer_class = Job_TypeSerializer
-    # def destroy(self, request, *args, **kwargs):
-    #     print(self)
-    #     # return super().destroy(request, *args, **kwargs)
+    
+    def delete(self, request, pk):
+        NOT_DELETABLE = ['CEO' , 'HR' , 'Manager' , 'Warehouse Administrator' , 'Sales Officer' ]
+        try:
+            instance = Job_Type.objects.get(pk=pk)
+            if instance.job_type in NOT_DELETABLE :
+                return Response({"error": "Object cannot be deleted"}, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                instance.delete()
+                return Response({"message": "Object deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response({"error": "Object not found"}, status=status.HTTP_404_NOT_FOUND)
 
+
+  
 # ----------------------employee------------------------
     
 class EmployeesApiView(generics.ListAPIView,generics.ListCreateAPIView):

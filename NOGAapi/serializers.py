@@ -9,19 +9,29 @@ class Job_TypeSerializer(serializers.ModelSerializer):
     class Meta:
         model=Job_Type
         fields=['id','job_type']
-
-
+  
 class EmployeeSerializer(serializers.ModelSerializer):
     job_type_title=serializers.StringRelatedField(source='job_type')
+    branch_name = serializers.SerializerMethodField()
     class Meta:
         model=Employee
-        fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','date_of_employment','birth_date','gender','job_type' , 'job_type_title' , 'branch' , 'phone']
+        fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','date_of_employment','birth_date','gender','job_type' , 'job_type_title' , 'branch' , 'phone' , 'branch_name']
         extra_kwargs = {
             "job_type_title" : {'read_only' : True},
             "job_type" : {
                 "required":True
             },
+            "branch_name" :{
+                "read_only" : True
+            }
         }
+        
+    def get_branch_name(self , object):
+        if(object.branch):
+            return object.branch.city.city_name + " " + str(object.branch.number)
+        return 
+    
+        
         
     def validate(self, attrs):
         request= self.context['request']
@@ -105,12 +115,9 @@ class BranchSerializer(serializers.ModelSerializer):
         branchesOrdered = branches.order_by('number')
         branch = self.Meta.model(**validated_data)
         if len(branchesOrdered)>0:
-            print(len(branchesOrdered))
-            print("aaa")
             maxNumber = branchesOrdered[len(branchesOrdered)-1].number 
             branch.number =  maxNumber +  1
         elif len(branchesOrdered)==0:
-            print("vvv")
             print(len(branchesOrdered))
             
             branch.number =  1
