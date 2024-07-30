@@ -15,6 +15,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .authentication import create_access_token , create_refresh_token
 from .permissions import *
 from .pagenation import Paginator
+from .customFilters import *
 # Create your views here.
 
 
@@ -249,20 +250,80 @@ class ProductsApiview(generics.ListCreateAPIView):
     serializer_class=ProductSerializer
     permission_classes=[IsWarehouseAdministrator]
     pagination_class = Paginator
-    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
-    filterset_fields=['product_name','wholesale_price','selling_price','quantity' , 'category_type' , 'phone__CPU_name' , 'phone__RAM' , 'phone__storage' , 'phone__battery' , 'phone__sim' , 'phone__display_size' , 'phone__sd_card' , 'phone__description' , 'phone__release_date' , 'phone__brand_id' , 'phone__CPU_id' , 'phone__color_id' , 'accessory__description' , 'accessory__accessory_category']
-    search_fields = ['product_name','wholesale_price','selling_price','quantity' , 'category_type' , 'phone__CPU_name' , 'phone__RAM' , 'phone__storage' , 'phone__battery' , 'phone__sim' , 'phone__display_size' , 'phone__sd_card' , 'phone__description' , 'phone__release_date' , 'phone__brand_id' , 'phone__CPU_id' , 'phone__color_id' , 'accessory__description' , 'accessory__accessory_category'] 
-    ordering_fields = ['product_name','wholesale_price','selling_price','quantity' , 'category_type' , 'phone__CPU_name' , 'phone__RAM' , 'phone__storage' , 'phone__battery' , 'phone__sim' , 'phone__display_size' , 'phone__sd_card' , 'phone__description' , 'phone__release_date' , 'phone__brand_id' , 'phone__CPU_id' , 'phone__color_id' , 'accessory__description' , 'accessory__accessory_category']
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter ]
+    search_fields = ['product_name','wholesale_price','selling_price','quantity'  , 'category_type__category_name', 'phone__CPU_name' , 'phone__RAM' , 'phone__storage' , 'phone__battery' , 'phone__sim' , 'phone__display_size' , 'phone__sd_card' , 'phone__description' , 'phone__release_date' , 'phone__brand_id__brand_name' , 'phone__CPU_id__CPU_brand' , 'phone__color_id__color' , 'accessory__description' , 'accessory__accessory_category__category_name'] 
+    filterset_fields = ['product_name','wholesale_price','selling_price','quantity'  , 'category_type' , 'phone__CPU_name' , 'phone__RAM' , 'phone__storage' , 'phone__battery' , 'phone__sim' , 'phone__display_size' , 'phone__sd_card' , 'phone__description' , 'phone__release_date' , 'phone__brand_id' , 'phone__CPU_id' , 'phone__color_id' , 'accessory__description' , 'accessory__accessory_category']
+    ordering_fields = ['product_name','wholesale_price','selling_price','quantity'  , 'category_type' , 'phone__CPU_name' , 'phone__RAM' , 'phone__storage' , 'phone__battery' , 'phone__sim' , 'phone__display_size' , 'phone__sd_card' , 'phone__description' , 'phone__release_date' , 'phone__brand_id' , 'phone__CPU_id' , 'phone__color_id' , 'accessory__description' , 'accessory__accessory_category']
     # def get(self, request, *args, **kwargs):
     #     queryset=Product.objects.all().select_related("phone")
     #     s = ProductSerializer(queryset , many=True)
     #     print(s)
     #     return Response({"result" : s.data})
-    
+    def get_queryset(self):
+        queryset = Product.objects.all()
+        min_value = self.request.query_params.get('min_price')
+        max_value = self.request.query_params.get('max_price')
+        
+        if min_value is not None:
+            queryset = queryset.filter(wholesale_price__gte=min_value)
+        if max_value is not None:
+            queryset = queryset.filter(wholesale_price__lte=max_value)
+       
+            
+        return queryset
 class ProductApiview(generics.RetrieveUpdateDestroyAPIView):
     permission_classes=[IsWarehouseAdministrator]
     queryset=Product.objects.all()
     serializer_class=ProductSerializer
+    
+# ----------------------product entry to the main storage------------------------
+
+class EntryProcessApiView(generics.ListCreateAPIView):
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields=['id' , 'date_of_process']
+    search_fields = ['id' , 'date_of_process'] 
+    ordering_fields = ['id' , 'date_of_process']
+    permission_classes=[IsAuthenticated]
+    queryset=Entry_process.objects.all()
+    serializer_class=EntryProcessSerializer
+    
+
+# ----------------------product movment to the branches's storage------------------------
+
+
+class ProductsMovmentApiView(generics.ListCreateAPIView):
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields=['branch__id' , 'movement_type' , 'date_of_process']
+    search_fields = ['branch__id' ,'movement_type' , 'date_of_process'] 
+    ordering_fields = ['branch__id' , 'movement_type' , 'date_of_process']
+    queryset=Products_Movment.objects.all()
+    serializer_class=ProductsMovmentSerializer
+    permission_classes=[IsAuthenticated]
+# ----------------------product movment to the branches's storage------------------------
+class BranchesProductsApiView(generics.ListAPIView):
+    pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter ]
+    search_fields = [ 'branch__id' , 'quantity' , 'product__category_type__category_name', 'product__product_name' , 'product__wholesale_price','product__selling_price'  , 'product__phone__RAM' , 'product__phone__storage' , 'product__phone__battery' , 'product__phone__sim' , 'product__phone__display_size' , 'product__phone__sd_card' , 'product__phone__description' , 'product__phone__release_date' , 'product__phone__brand_id__brand_name' , 'product__phone__CPU_id__CPU_brand' , 'product__phone__color_id__color' , 'product__accessory__description' , 'product__accessory__accessory_category__category_name'] 
+    filterset_fields = [ 'branch__id' , 'quantity' , 'product__category_type', 'product__product_name' , 'product__wholesale_price','product__selling_price'  , 'product__phone__RAM' , 'product__phone__storage' , 'product__phone__battery' , 'product__phone__sim' , 'product__phone__display_size' , 'product__phone__sd_card' , 'product__phone__description' , 'product__phone__release_date' , 'product__phone__brand_id' , 'product__phone__CPU_id' , 'product__phone__color_id' , 'product__accessory__description' , 'product__accessory__accessory_category'] 
+    ordering_fields = [ 'branch__id' , 'quantity' , 'product__category_type', 'product__product_name' , 'product__wholesale_price','product__selling_price'  , 'product__phone__RAM' , 'product__phone__storage' , 'product__phone__battery' , 'product__phone__sim' , 'product__phone__display_size' , 'product__phone__sd_card' , 'product__phone__description' , 'product__phone__release_date' , 'product__phone__brand_id' , 'product__phone__CPU_id' , 'product__phone__color_id' , 'product__accessory__description' , 'product__accessory__accessory_category'] 
+    queryset=Branch_Products.objects.all()
+    serializer_class=BranchProductsSerializer
+    permission_classes=[IsAuthenticated]
+    def get_queryset(self):
+        queryset = Branch_Products.objects.all()
+        min_value = self.request.query_params.get('min_price')
+        max_value = self.request.query_params.get('max_price')
+        
+        if min_value is not None:
+            queryset = queryset.filter(product__wholesale_price__gte=min_value)
+        if max_value is not None:
+            queryset = queryset.filter(product__wholesale_price__lte=max_value)
+       
+            
+        return queryset
+    
 # ----------------------product categories------------------------
 
 class ProductsCategoriesApiView(generics.ListCreateAPIView):
@@ -364,9 +425,9 @@ class AccessoriesAPIView(generics.ListCreateAPIView):
     serializer_class=AccessorySerializer
     pagination_class = Paginator
     filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
-    filterset_fields=['product_id' , 'description' , 'accessory_category']
-    search_fields = ['product_id' , 'description' , 'accessory_category'] 
-    ordering_fields = ['product_id' , 'description' , 'accessory_category']
+    filterset_fields=['product' , 'description' , 'accessory_category']
+    search_fields = ['product' , 'description' , 'accessory_category'] 
+    ordering_fields = ['product' , 'description' , 'accessory_category']
     
 class AccessoryAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes=[IsWarehouseAdministrator]

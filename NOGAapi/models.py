@@ -80,6 +80,7 @@ class Product(models.Model):
     selling_price=models.IntegerField()
     quantity=models.IntegerField()
     category_type=models.ForeignKey(Products_Categories,on_delete=models.PROTECT,default=1)
+    qr_code = models.FileField(upload_to='QR/' , null=True)
 
 
 #----new----
@@ -103,7 +104,8 @@ class CPU(models.Model):
 
 
 class Phone(models.Model):
-    product_id=models.OneToOneField(Product,on_delete=models.CASCADE)
+    
+    product=models.OneToOneField(Product,on_delete=models.CASCADE)
     CPU_name=models.CharField(max_length=50)
     RAM=models.IntegerField()
     storage=models.IntegerField()
@@ -116,9 +118,13 @@ class Phone(models.Model):
     brand_id=models.ForeignKey(Phone_Brand,on_delete=models.CASCADE)
     CPU_id=models.ForeignKey(CPU,on_delete=models.CASCADE)
     color_id=models.ForeignKey(Color,on_delete=models.CASCADE)
+    
+    @property
+    def phone_cameras(self):
+        return self.phone_cameras_set.all()
 
 class Phone_Cameras(models.Model):
-    product_id=models.ForeignKey(Phone,on_delete=models.CASCADE)
+    product=models.ForeignKey(Phone,on_delete=models.CASCADE)
     camera_resolution=models.FloatField()
     main=models.BooleanField()
 
@@ -129,14 +135,48 @@ class Accessory_Category(models.Model):
     category_name=models.CharField(max_length=20 , unique=True)
  
 class Accessory(models.Model):
-    product_id=models.OneToOneField(Product,on_delete=models.CASCADE)
+    product=models.OneToOneField(Product,on_delete=models.CASCADE)
     description=models.CharField(max_length=200)
     accessory_category=models.ForeignKey(Accessory_Category,on_delete=models.CASCADE)
 
 
 class Phones_Accessories(models.Model):
-    phone_id=models.ForeignKey(Phone,on_delete=models.CASCADE)
-    accessor_id=models.ForeignKey(Accessory,on_delete=models.CASCADE)
-
-
+    phone=models.ForeignKey(Phone,on_delete=models.CASCADE)
+    accessor=models.ForeignKey(Accessory,on_delete=models.CASCADE)
     
+    
+class Entry_process(models.Model):
+    date_of_process = models.DateField()
+    
+    @property
+    def entered_products(self):
+        return self.entered_product_set.all()
+    
+class Entered_Product(models.Model):
+    process = models.ForeignKey(Entry_process , on_delete=models.CASCADE)
+    product = models.ForeignKey(Product,on_delete=models.DO_NOTHING)
+    quantity = models.IntegerField()
+    wholesale_price=models.IntegerField(null=True)
+    selling_price=models.IntegerField(null=True)
+    
+class Branch_Products(models.Model):
+    branch = models.ForeignKey(Branch , on_delete=models.PROTECT)
+    product = models.ForeignKey(Product , on_delete=models.PROTECT)
+    quantity = models.IntegerField()
+    
+    
+class Products_Movment(models.Model):
+    branch = models.ForeignKey(Branch , on_delete=models.PROTECT)
+    date_of_process = models.DateField()
+    movement_type = models.BooleanField()
+    
+    @property
+    def transported_product(self):
+        return self.transported_product_set.all()
+    
+class Transported_Product(models.Model):
+    process = models.ForeignKey(Products_Movment , on_delete=models.CASCADE)
+    product = models.ForeignKey(Product , on_delete=models.PROTECT)
+    wholesale_price  = models.IntegerField()
+    selling_price = models.IntegerField()
+    quantity = models.IntegerField()

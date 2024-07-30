@@ -33,5 +33,222 @@
         "fields":{
             "job_type": "Sales Officer"
         }
+    },
+    {
+        "model":"NOGAapi.Employee",
+        "pk": 1,
+        "fields":{
+            "national_number": 1,
+            "first_name": "Naya",
+            "middle_name": "Zidan",
+            "last_name": "ZidanHR",
+            "email": "test@gmail.com",
+            "salary": 999,
+            "address": "Homs",
+            "date_of_employment": "2024-01-01",
+            "birth_date": "2002-07-17",
+            "gender": false,
+            "job_type": 2,
+            "branch": null,
+            "phone": "0994010054"
+        }
+    },
+    {
+        "model":"NOGAapi.Employee",
+        "pk": 2,
+        "fields":{
+            "national_number": 2,
+            "first_name": "Naya",
+            "middle_name": "Zidan",
+            "last_name": "ZidanCEO",
+            "email": "test@gmail.com",
+            "salary": 999,
+            "address": "Hama",
+            "date_of_employment": "2024-01-01",
+            "birth_date": "2002-07-17",
+            "gender": false,
+            "job_type": 1,
+            "branch": null,
+            "phone": "0994010054"
+        }
+    },
+    {
+        "model":"NOGAapi.Employee",
+        "pk": 3,
+        "fields":{
+            "national_number": 3,
+            "first_name": "Oudisho",
+            "middle_name": "Rami",
+            "last_name": "QattyneWA",
+            "email": "test@gmail.com",
+            "salary": 999,
+            "address": "Hama",
+            "date_of_employment": "2024-01-01",
+            "birth_date": "2002-07-17",
+            "gender": false,
+            "job_type": 3,
+            "branch": null,
+            "phone": "0994010054"
+        }
+    },
+    {
+        "model":"NOGAapi.Employee",
+        "pk": 4,
+        "fields":{
+            "national_number": 4,
+            "first_name": "Oudisho",
+            "middle_name": "Rami",
+            "last_name": "QattyneManager",
+            "email": "test@gmail.com",
+            "salary": 999,
+            "address": "Hama",
+            "date_of_employment": "2024-01-01",
+            "birth_date": "2002-07-17",
+            "gender": false,
+            "job_type": 4,
+            "branch": null,
+            "phone": "0994010054"
+        }
+    },
+    {
+        "model":"NOGAapi.Employee",
+        "pk": 5,
+        "fields":{
+            "national_number": 5,
+            "first_name": "Naya",
+            "middle_name": "Zidan",
+            "last_name": "ZidanManager",
+            "email": "test@gmail.com",
+            "salary": 999,
+            "address": "Hama",
+            "date_of_employment": "2024-01-01",
+            "birth_date": "2002-07-17",
+            "gender": false,
+            "job_type": 4,
+            "branch": null,
+            "phone": "0994010054"
+        }
+    },
+    {
+        "model":"NOGAapi.City",
+        "pk":1,
+        "fields":{
+            "city_name":"Homs"
+           }
+    },
+    {
+        "model":"NOGAapi.City",
+        "pk":2,
+        "fields":{
+            "city_name":"Hama"
+           }
+    },
+    {
+        "model":"NOGAapi.City",
+        "pk":3,
+        "fields":{
+            "city_name":"Aleppo"
+           }
+    },
+    {
+        "model":"NOGAapi.City",
+        "pk":4,
+        "fields":{
+            "city_name":"Damascus"
+           }
+    },
+    {
+        "model":"NOGAapi.Branch",
+        "pk": 1,
+        "fields":{
+            "number": 1,
+            "location": "Homs",
+            "area": "bab tadmor",
+            "street": "AlForat",
+            "city" : 1,
+            "manager" : 4
+        }
+    },
+    {
+        "model":"NOGAapi.Branch",
+        "pk": 2,
+        "fields":{
+            "number": 1,
+            "location": "Hama",
+            "area": "Kfarbo",
+            "street": "St.Takla",
+            "city" : 2,
+            "manager" : 5
+        }
+    },
+    {
+        "model":"NOGAapi.Color",
+        "pk": 1,
+        "fields":{
+            "color":"white"
+        }
+    },
+    {
+        "model":"NOGAapi.Color",
+        "pk": 2,
+        "fields":{
+            "color":"black"
+        }
+    },
+    {
+        "model":"NOGAapi.Color",
+        "pk": 3,
+        "fields":{
+            "color":"red"
+        }
+    },
+    {
+        "model":"NOGAapi.Products_Categories",
+        "pk": 1,
+        "fields":{
+            "category_name":"Phone"
+        }
+    },
+    {
+        "model":"NOGAapi.Products_Categories",
+        "pk": 2,
+        "fields":{
+            "category_name":"Accessory"
+        }
+    },
+    {
+        "model":"NOGAapi.Phone_Brand",
+        "pk": 1,
+        "fields":{
+            "brand_name":"iphone"
+        }
+    },
+    {
+        "model":"NOGAapi.Phone_Brand",
+        "pk": 2,
+        "fields":{
+            "brand_name":"xiaomi"
+        }
+    },
+    {
+        "model":"NOGAapi.CPU",
+        "pk": 1,
+        "fields":{
+            "CPU_brand":"snapdragon"
+        }
+    },
+    {
+        "model":"NOGAapi.CPU",
+        "pk": 2,
+        "fields":{
+            "CPU_brand":"M1"
+        }
+    },
+    {
+        "model":"NOGAapi.Accessory_Category",
+        "pk": 1,
+        "fields":{
+            "category_name" : "Covers"
+        }
     }
   ]

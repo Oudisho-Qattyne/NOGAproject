@@ -181,3 +181,6 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+
+DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'

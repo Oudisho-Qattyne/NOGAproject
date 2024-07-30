@@ -3,8 +3,12 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer 
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.tokens import Token
-from .models import *
+from rest_framework.response import Response
 
+from .models import *
+from datetime import datetime
+import qrcode
+from PIL import Image
 class Job_TypeSerializer(serializers.ModelSerializer):
     class Meta:
         model=Job_Type
@@ -171,14 +175,20 @@ class CPUSerializer(serializers.ModelSerializer):
     class Meta:
         model=CPU
         fields=['id' , 'CPU_brand']
-        
+
+class PhoneCamerasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Phone_Cameras
+        fields = ['camera_resolution' , 'main']
+
 class PhoneSerializer(serializers.ModelSerializer):
     brand = serializers.StringRelatedField(source='brand_id')
     CPU = serializers.StringRelatedField(source='CPU_id')
     color = serializers.StringRelatedField(source='color_id')
+    phone_cameras = PhoneCamerasSerializer(many=True)
     class Meta:
         model=Phone
-        fields=[ 'CPU_name' , 'RAM' , 'storage' , 'battery' , 'sim' , 'display_size' , 'sd_card' , 'description' , 'release_date' , 'brand_id' , 'CPU_id' , 'color_id' , 'brand' , 'CPU' , 'color']
+        fields=[ 'CPU_name' , 'RAM' , 'storage' , 'battery' , 'sim' , 'display_size' , 'sd_card' , 'description' , 'release_date' , 'brand_id' , 'CPU_id' , 'color_id' , 'brand' , 'CPU' , 'color' , 'phone_cameras']
         extra_kwargs={
             'brand':{
                 'read_only': True,
@@ -198,7 +208,12 @@ class PhoneSerializer(serializers.ModelSerializer):
             'color_id':{
                 'required':True
             },
+            'phone_cameras':{
+                'required' : False
+            }
         }
+        
+   
 class AccessoryCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model=Accessory_Category
@@ -217,7 +232,23 @@ class AccessorySerializer(serializers.ModelSerializer):
                 'read_only' : True
             }
         }
-        
+class ProductSerializerForSale(serializers.ModelSerializer):
+    category_name=serializers.StringRelatedField(
+        source='category_type'
+    )
+    phone = PhoneSerializer()
+    accessory = AccessorySerializer()
+    class Meta:
+        model=Product
+        fields=['product_name','category_type','category_name' , 'phone' , 'accessory' , 'wholesale_price' , 'selling_price']
+        extra_kwargs={
+            'category_name' : {
+                'read_only' : True,
+            },
+            'category_type' : {
+                'required' : True
+            }
+        }
         
 class ProductSerializer(serializers.ModelSerializer):
     category_name=serializers.StringRelatedField(
@@ -227,7 +258,7 @@ class ProductSerializer(serializers.ModelSerializer):
     accessory = AccessorySerializer()
     class Meta:
         model=Product
-        fields=['id' , 'product_name','wholesale_price','selling_price','quantity','category_type','category_name' , 'phone' , 'accessory']
+        fields=['id' , 'product_name','wholesale_price','selling_price','quantity','category_type','category_name' , 'phone' , 'accessory' , 'qr_code']
         extra_kwargs={
             'category_name' : {
                 'read_only' : True,
@@ -236,3 +267,328 @@ class ProductSerializer(serializers.ModelSerializer):
                 'required' : True
             }
         }
+    def __init__(self ,  *args, **kwargs ):
+        super(ProductSerializer, self).__init__(*args, **kwargs)
+        request = kwargs['context']['request']
+        if request.method in ["POST" , "PUT"]:
+            if 'category_type' in self.initial_data:
+                category_type = self.initial_data.get('category_type')
+                
+                if category_type == 1:
+                    self.fields['accessory'].required = False
+                    self.fields['phone'].required = True
+                elif category_type == 2:
+                    self.fields['phone'].required = False
+                    self.fields['accessory'].required = True
+        # elif request.method in ["GET"]:
+        #     category_type = request.data['category_type']
+        #     if category_type == 1:
+        #         self.fields['phone'].read_only = False
+        #     elif category_type == 2:
+        #         self.fields['phone'].read_only = False
+                       
+                
+    def create(self, validated_data):
+        
+        if validated_data['category_type'].category_name == "Phone":
+            phone_data = validated_data.pop('phone')
+            product_instance = Product.objects.create(**validated_data)
+            phone_cameras_data = phone_data.pop('phone_cameras' , None)
+            phone_instance = Phone.objects.create(product=product_instance,**phone_data)
+            file_name = f"product-{product_instance.id}.png"
+            path = 'files'
+            file_path = f"{path}/{file_name}"
+            qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+            qr.add_data(f"product-{product_instance.id}")
+            qr.make(fit=True)
+            qr_img = qr.make_image(fill_color="black", back_color="white")
+            print(f"product-{product_instance.id}")
+            print(qr_img)
+            qr_img.save(file_path, 'PNG')
+            product_instance.qr_code = qr_img
+            if phone_cameras_data:
+                for phone_camera_data in phone_cameras_data:
+                    phone_camera_instanse = Phone_Cameras.objects.create(product = phone_instance , **phone_camera_data)
+                    phone_camera_instanse.save()
+            phone_instance.save()
+                
+            
+            return product_instance
+        
+        if validated_data['category_type'].category_name == "Accessory":
+            accessory_data = validated_data.pop('accessory')
+            product_instance = Product.objects.create(**validated_data)
+            accessory_instance = Accessory.objects.create(product=product_instance,**accessory_data)
+            accessory_instance.save()
+            
+            return product_instance
+        
+    def update(self, instance, validated_data):
+        #update the product
+        instance.product_name = validated_data.get('product_name', instance.product_name)
+        instance.wholesale_price = validated_data.get('wholesale_price', instance.wholesale_price)
+        instance.selling_price = validated_data.get('selling_price', instance.selling_price)
+        instance.quantity = validated_data.get('quantity', instance.quantity)
+        instance.category_type = validated_data.get('category_type', instance.category_type)
+        
+        
+        if validated_data['category_type'].category_name == "Phone":
+            phone_data = validated_data.pop('phone')
+            phone_cameras_data = phone_data.pop('phone_cameras')
+            #update phone and create if it dosen't exist
+            try:
+                phone_instance = Phone.objects.get(product=instance)
+                phone_instance.CPU_name = phone_data.get('CPU_name' , phone_instance.CPU_name)
+                phone_instance.RAM = phone_data.get('RAM' , phone_instance.RAM)
+                phone_instance.storage = phone_data.get('storage' , phone_instance.storage)
+                phone_instance.battery = phone_data.get('battery' , phone_instance.battery)
+                phone_instance.sim = phone_data.get('sim' , phone_instance.sim)
+                phone_instance.display_size = phone_data.get('display_size' , phone_instance.display_size)
+                phone_instance.sd_card = phone_data.get('sd_card' , phone_instance.sd_card)
+                phone_instance.description = phone_data.get('description' , phone_instance.description)
+                phone_instance.release_date = phone_data.get('release_date' , phone_instance.release_date)
+                phone_instance.brand_id = phone_data.get('brand_id' , phone_instance.brand_id)
+                phone_instance.CPU_id = phone_data.get('CPU_id' , phone_instance.CPU_id)
+                phone_instance.color_id = phone_data.get('color_id' , phone_instance.color_id)
+                phone_instance.save()
+                
+                this_phone_cameras= Phone_Cameras.objects.filter(product = phone_instance)
+                if(len(this_phone_cameras) != 0):
+                    print(len(this_phone_cameras))
+                    for phone_camera_instance in this_phone_cameras:
+                        phone_camera_instance.delete()
+                for phone_camera_data in phone_cameras_data:
+                    phone_camera_instanse = Phone_Cameras.objects.create(product = phone_instance , **phone_camera_data)
+                
+                # for phone_camera_data in phone_cameras_data:
+                #     try:
+                #         phone_camera_instance = Phone_Cameras.objects.get(product=phone_instance)
+                #         phone_camera_instance.camera_resolution = phone_camera_data.get('camera_resolution' , phone_camera_instance.camera_resolution)
+                #         phone_camera_instance.main = phone_camera_data.get('main' , phone_camera_instance.main)
+                #         phone_camera_instance.save()
+                        
+                        
+                    # except Phone_Cameras.DoesNotExist:
+            except Phone.DoesNotExist:
+                phone_instance = Phone.objects.create(product=instance,**phone_data)
+                for phone_camera_data in phone_cameras_data:
+                    phone_camera_instanse = Phone_Cameras.objects.create(product = phone_instance , **phone_camera_data)
+                
+            #delete if there is unwanted accessory
+                
+            try:
+                accessory_instance = Accessory.objects.get(product=instance )
+                accessory_instance.delete()
+            except Accessory.DoesNotExist:
+                print("123123")
+            return instance
+        
+        if validated_data['category_type'].category_name == "Accessory":
+            accessory_data = validated_data.pop('accessory')
+            #update accessory and create if it dosen't exist
+            
+            try:
+                accessory_instance = Accessory.objects.get(product=instance)
+                accessory_instance.description = accessory_data.get('description' , accessory_instance.description)
+                accessory_instance.accessory_category = accessory_data.get('accessory_category' , accessory_instance.accessory_category)
+                accessory_instance.save()
+                
+            except Accessory.DoesNotExist:
+                accessory_instance = Accessory.objects.create(product=instance,**accessory_data)
+                
+            #delete if there is unwanted phone
+            try:
+                phone_instance = Phone.objects.get(product=instance )
+                phone_instance.delete()
+            except Phone.DoesNotExist:
+                print("123123")
+            return instance
+    
+    
+    def perform_after_create(self, instance):
+        # Custom logic to be executed after creating the object
+        print(instance.id)
+        instance.save()
+class EnteredProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Entered_Product
+        fields=['process' , 'product' , 'quantity' , 'wholesale_price' , 'selling_price']
+        extra_kwargs = {
+            "process":{
+                "read_only" : True,
+            },
+             "wholesale_price":{
+                "required" : False,
+            },
+              "selling_price":{
+                "required" : False,
+            },
+            
+        }
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        product = ProductSerializerForSale(instance.product)
+        representation['product'] = product.data
+        return representation
+        
+    
+            
+class EntryProcessSerializer(serializers.ModelSerializer):
+    entered_products = EnteredProductSerializer(many=True )
+    class Meta:
+        model = Entry_process
+        fields = ['id' , 'date_of_process' , 'entered_products' ]
+        extra_kwargs = {
+            "date_of_process":{
+                "read_only" : True
+            },
+            
+        }
+    
+    def create(self, validated_data):
+        entered_products_data = validated_data.pop('entered_products')
+        date_of_process = datetime.today().strftime('%Y-%m-%d')
+        validated_data['date_of_process'] = date_of_process
+        entry_process_instance = Entry_process.objects.create(**validated_data)
+        entry_process_instance.save()
+        for entered_product_data in entered_products_data:
+            # product_instance = Product.objects.get(id=entered_product_data['product'])
+            product_instance = entered_product_data['product']
+            product_instance.quantity +=  entered_product_data.get('quantity' , 0)
+            product_instance.wholesale_price =  entered_product_data.get('wholesale_price' , product_instance.wholesale_price)
+            product_instance.selling_price =  entered_product_data.get('selling_price' , product_instance.selling_price)
+            if('wholesale_price' in entered_product_data):
+                print('there is wholesale_price')
+            else:
+                print('there is no wholesale_price')
+                entered_product_data['wholesale_price'] = product_instance.wholesale_price
+                
+            if('selling_price' in entered_product_data):
+                print('there is selling_price')
+            else:
+                print('there is no selling_price')
+                entered_product_data['selling_price'] = product_instance.selling_price
+            entered_product_instance = Entered_Product.objects.create(process = entry_process_instance , **entered_product_data)
+                
+            product_instance.save()
+            entered_product_instance.save()
+        return entry_process_instance
+
+class TransportedProductsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transported_Product
+        fields = ['product' , 'wholesale_price', 'selling_price', 'quantity']
+        extra_kwargs = {
+            "process":{
+                    "read_only" : True,
+                },
+        }
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        product = ProductSerializerForSale(instance.product)
+        representation['product'] = product.data
+        return representation
+        
+class ProductsMovmentSerializer(serializers.ModelSerializer):
+    # transported_products = TransportedProductsSerializer(many=True)
+    transported_product = TransportedProductsSerializer(many=True)
+    class Meta:
+        model = Products_Movment
+        fields = ['id' , 'branch' , 'date_of_process' , 'movement_type' , 'transported_product' ]
+        extra_kwargs = {
+            "date_of_process":{
+                "read_only" : True
+            },
+
+        }
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        transported_products_data = validated_data['transported_product']
+        movement_type = validated_data['movement_type']
+        error = {
+            "transported_product":[
+                
+            ]
+        }
+        if movement_type:
+            
+            for index , transported_product_data in enumerate(transported_products_data):
+                product_instance = Product.objects.get(id=transported_product_data['product'].id)
+                if transported_product_data['quantity'] > product_instance.quantity:
+                    error['transported_product'].append({"quantity":f"we don't have that much in the main warehouse for the {index+1}th product "})
+                    
+                        
+            
+        else:
+            for index , transported_product_data in enumerate(transported_products_data):
+                try:
+                    product_instance = Branch_Products.objects.get(product=transported_product_data['product'] , branch = validated_data['branch'])
+                    if transported_product_data['quantity'] > product_instance.quantity:
+                        error['transported_product'].append({"quantity":f"we don't have that much in the branch warehouse for the {index+1}th product "})
+                except Branch_Products.DoesNotExist:
+                    error['transported_product'].append({"product":f"we don't have that product in this branch warehouse for the {index+1}th product "})
+                    
+        if len(error['transported_product']) > 0:
+            raise serializers.ValidationError(error)
+        else:
+            return validated_data
+                
+
+    def create(self, validated_data):
+        print(validated_data)
+        transporterd_products_data = validated_data.pop('transported_product')
+        print(validated_data)
+        
+        date_of_process = datetime.today().strftime('%Y-%m-%d')
+        validated_data['date_of_process'] = date_of_process
+        products_movment_instance = Products_Movment.objects.create(**validated_data)
+        for transported_product_data in transporterd_products_data:
+            transported_product_instance = Transported_Product.objects.create(process = products_movment_instance , **transported_product_data)
+            
+            try:
+                branch_product_instance = Branch_Products.objects.get(product=transported_product_instance.product , branch = products_movment_instance.branch)
+                product_instance = Product.objects.get(id=transported_product_data['product'].id)
+                
+                if products_movment_instance.movement_type:
+                    branch_product_instance.quantity += transported_product_instance.quantity
+                    product_instance.quantity -= transported_product_instance.quantity
+                    
+                else:
+                    branch_product_instance.quantity -= transported_product_instance.quantity
+                    product_instance.quantity += transported_product_instance.quantity
+                    
+                product_instance.save()
+                branch_product_instance.save()
+                
+            except Branch_Products.DoesNotExist:
+                branch_product_instance = Branch_Products.objects.create(product=transported_product_instance.product , branch = products_movment_instance.branch , quantity = transported_product_instance.quantity)
+                product_instance = Product.objects.get(id=transported_product_data['product'].id)
+                
+                if products_movment_instance.movement_type:
+                    product_instance.quantity -= transported_product_instance.quantity
+                    
+                else:
+                    product_instance.quantity += transported_product_instance.quantity
+                    
+                product_instance.save()
+                branch_product_instance.save()
+            transported_product_instance.save()
+        products_movment_instance.save()
+        return products_movment_instance
+    
+class BranchProductsSerializer(serializers.ModelSerializer):
+    product = ProductSerializerForSale()
+    class Meta:
+        model = Branch_Products
+        fields = ['branch' , 'product' , 'quantity']
+        unique_together = ['branch', 'product']
+        
+class BranchProductsForSalesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Branch_Products
+        fields = [ 'product' , 'quantity']
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        product = ProductSerializerForSale(instance.product)
+        representation['product'] = product.data
+        return representation

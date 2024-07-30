@@ -78,4 +78,9 @@ urlpatterns = [
     
     path('products' , ProductsApiview.as_view()),
     path('products/<int:pk>' , ProductApiview.as_view()),
+    path('products/enter_products' , EntryProcessApiView.as_view()),
+    path('products/transport' , ProductsMovmentApiView.as_view()),
+    path('products/branch' , BranchesProductsApiView.as_view())
+    
+    
 ]
