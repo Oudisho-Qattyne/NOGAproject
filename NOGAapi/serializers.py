@@ -4,11 +4,13 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.tokens import Token
 from rest_framework.response import Response
-
+import socket
 from .models import *
 from datetime import datetime
 import qrcode
-from PIL import Image
+from PIL import Image , ImageDraw
+
+import io
 class Job_TypeSerializer(serializers.ModelSerializer):
     class Meta:
         model=Job_Type
@@ -19,7 +21,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
     branch_name = serializers.SerializerMethodField()
     class Meta:
         model=Employee
-        fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','date_of_employment','birth_date','gender','job_type' , 'job_type_title' , 'branch' , 'phone' , 'branch_name']
+        fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','date_of_employment','birth_date','gender','job_type' , 'job_type_title' , 'branch' , 'phone' , 'branch_name' , 'image']
         extra_kwargs = {
             "job_type_title" : {'read_only' : True},
             "job_type" : {
@@ -151,7 +153,7 @@ class CitySerializer(serializers.ModelSerializer):
 class CustomerSerializer(serializers.ModelSerializer):
     class Meta:
         model=Customer
-        fields=['national_number','first_name','middle_name','last_name','phone','gender']
+        fields=['id' , 'national_number','first_name','middle_name','last_name','phone','gender']
 
 class ProductCategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -240,7 +242,7 @@ class ProductSerializerForSale(serializers.ModelSerializer):
     accessory = AccessorySerializer()
     class Meta:
         model=Product
-        fields=['product_name','category_type','category_name' , 'phone' , 'accessory' , 'wholesale_price' , 'selling_price']
+        fields=['product_name','category_type','category_name' , 'quantity', 'phone' , 'accessory' , 'wholesale_price' , 'selling_price' , 'qr_code' , 'qr_codes_download']
         extra_kwargs={
             'category_name' : {
                 'read_only' : True,
@@ -249,7 +251,22 @@ class ProductSerializerForSale(serializers.ModelSerializer):
                 'required' : True
             }
         }
-        
+def genereate(image_url , product):
+    A4 = Image.open(f'mediafiles/productqr/A4.jpg')
+    img = Image.open(image_url)
+    new_image = Image.new('RGB',(A4.width,A4.height), (250,250,250))
+    number_of_rows = A4.height//img.height
+    number_of_cols = A4.width//img.width
+
+    for j in range(0 , number_of_rows): 
+        for i in range(0,number_of_cols):
+            draw = ImageDraw.Draw(img)
+            new_image.paste(img , (img.width*i,img.height*j))
+    draw = ImageDraw.Draw(new_image)
+    draw.text((10, A4.height-20), "Noga project 2024" , fill='Black' )
+    draw.text((300, A4.height-20), product , fill='Black' )
+    return new_image
+               
 class ProductSerializer(serializers.ModelSerializer):
     category_name=serializers.StringRelatedField(
         source='category_type'
@@ -258,7 +275,7 @@ class ProductSerializer(serializers.ModelSerializer):
     accessory = AccessorySerializer()
     class Meta:
         model=Product
-        fields=['id' , 'product_name','wholesale_price','selling_price','quantity','category_type','category_name' , 'phone' , 'accessory' , 'qr_code']
+        fields=['id' , 'product_name','wholesale_price','selling_price','quantity','category_type','category_name' , 'phone' , 'accessory' ,'qr_code' , 'qr_codes_download']
         extra_kwargs={
             'category_name' : {
                 'read_only' : True,
@@ -296,16 +313,19 @@ class ProductSerializer(serializers.ModelSerializer):
             phone_cameras_data = phone_data.pop('phone_cameras' , None)
             phone_instance = Phone.objects.create(product=product_instance,**phone_data)
             file_name = f"product-{product_instance.id}.png"
-            path = 'files'
+            download_file_name = f"product-{product_instance.id}-download.jpg"
+            path = f'mediafiles/productqr'
             file_path = f"{path}/{file_name}"
-            qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=10, border=4)
+            download_file_path = f"{path}/{download_file_name}"
+            qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=5, border=3)
             qr.add_data(f"product-{product_instance.id}")
             qr.make(fit=True)
             qr_img = qr.make_image(fill_color="black", back_color="white")
-            print(f"product-{product_instance.id}")
-            print(qr_img)
             qr_img.save(file_path, 'PNG')
-            product_instance.qr_code = qr_img
+            download_image = genereate(file_path , f"{product_instance.product_name}")
+            download_image.save(download_file_path)
+            product_instance.qr_code = f"{self.context.get('request').build_absolute_uri('/')}media/productqr/{file_name}"
+            product_instance.qr_codes_download = f"{self.context.get('request').build_absolute_uri('/')}media/productqr/{download_file_name}"
             if phone_cameras_data:
                 for phone_camera_data in phone_cameras_data:
                     phone_camera_instanse = Phone_Cameras.objects.create(product = phone_instance , **phone_camera_data)
@@ -405,10 +425,7 @@ class ProductSerializer(serializers.ModelSerializer):
             return instance
     
     
-    def perform_after_create(self, instance):
-        # Custom logic to be executed after creating the object
-        print(instance.id)
-        instance.save()
+    
 class EnteredProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Entered_Product
@@ -447,8 +464,8 @@ class EntryProcessSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         entered_products_data = validated_data.pop('entered_products')
-        date_of_process = datetime.today().strftime('%Y-%m-%d')
-        validated_data['date_of_process'] = date_of_process
+        # date_of_process = datetime.today().strftime('%Y-%m-%d')
+        # validated_data['date_of_process'] = date_of_process
         entry_process_instance = Entry_process.objects.create(**validated_data)
         entry_process_instance.save()
         for entered_product_data in entered_products_data:
@@ -482,6 +499,12 @@ class TransportedProductsSerializer(serializers.ModelSerializer):
             "process":{
                     "read_only" : True,
                 },
+            "wholesale_price":{
+                    "read_only" : True,
+            },
+            "selling_price":{
+                    "read_only" : True,
+            }
         }
     def to_representation(self, instance):
         representation = super().to_representation(instance)
@@ -510,23 +533,30 @@ class ProductsMovmentSerializer(serializers.ModelSerializer):
                 
             ]
         }
+        products = []
         if movement_type:
             
             for index , transported_product_data in enumerate(transported_products_data):
+                if(transported_product_data['product'].id in products):
+                    error['transported_product'].append({"product":f" repeated product in the {index+1}th product "})
+                products.append(transported_product_data['product'].id)
                 product_instance = Product.objects.get(id=transported_product_data['product'].id)
                 if transported_product_data['quantity'] > product_instance.quantity:
-                    error['transported_product'].append({"quantity":f"we don't have that much in the main warehouse for the {index+1}th product "})
+                    error['transported_product'].append({"quantity":f"we don't have that much in the main warehouse for the {index+1}th product , we only have {product_instance.quantity}"})
                     
                         
             
         else:
             for index , transported_product_data in enumerate(transported_products_data):
+                if(transported_product_data['product'] in products):
+                    error['transported_product'].append({"product":f" repeated product in the {index+1}th product "})
+                products.append(transported_product_data['product'].id)
                 try:
                     product_instance = Branch_Products.objects.get(product=transported_product_data['product'] , branch = validated_data['branch'])
                     if transported_product_data['quantity'] > product_instance.quantity:
-                        error['transported_product'].append({"quantity":f"we don't have that much in the branch warehouse for the {index+1}th product "})
+                        error['transported_product'].append({"quantity":f"we don't have that much in the branch warehouse for the {index+1}th product , we only have {product_instance.quantity} "})
                 except Branch_Products.DoesNotExist:
-                    error['transported_product'].append({"product":f"we don't have that product in this branch warehouse for the {index+1}th product "})
+                    error['transported_product'].append({"product":f"we don't have that product in this branch warehouse for the {index+1}th product  "})
                     
         if len(error['transported_product']) > 0:
             raise serializers.ValidationError(error)
@@ -539,15 +569,17 @@ class ProductsMovmentSerializer(serializers.ModelSerializer):
         transporterd_products_data = validated_data.pop('transported_product')
         print(validated_data)
         
-        date_of_process = datetime.today().strftime('%Y-%m-%d')
-        validated_data['date_of_process'] = date_of_process
+        # date_of_process = datetime.today().strftime('%Y-%m-%d')
+        # validated_data['date_of_process'] = date_of_process
         products_movment_instance = Products_Movment.objects.create(**validated_data)
         for transported_product_data in transporterd_products_data:
+            product_instance = Product.objects.get(id=transported_product_data['product'].id)
+            transported_product_data['wholesale_price'] = product_instance.wholesale_price
+            transported_product_data['selling_price'] = product_instance.selling_price
             transported_product_instance = Transported_Product.objects.create(process = products_movment_instance , **transported_product_data)
             
             try:
                 branch_product_instance = Branch_Products.objects.get(product=transported_product_instance.product , branch = products_movment_instance.branch)
-                product_instance = Product.objects.get(id=transported_product_data['product'].id)
                 
                 if products_movment_instance.movement_type:
                     branch_product_instance.quantity += transported_product_instance.quantity
@@ -592,3 +624,135 @@ class BranchProductsForSalesSerializer(serializers.ModelSerializer):
         product = ProductSerializerForSale(instance.product)
         representation['product'] = product.data
         return representation
+    
+#---new---
+class RequestedProductsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Requested_Products
+        fields=['id' , 'product_id','quantity','status']
+        extra_kwargs = {
+            "status":{
+                "read_only":True
+            }
+        }
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        product = ProductSerializerForSale(instance.product_id)
+        representation['product'] = product.data
+        return representation
+  
+
+class RequestStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Request_Status
+        fields='__all__'
+        
+class BranchesRequestsSerializer(serializers.ModelSerializer):
+    requests=RequestedProductsSerializer(many=True)
+    class Meta:
+        model=Branches_Requests
+        fields=['id','branch_id','date_of_request','note','requests']
+  
+    def create(self, validated_data):
+        RequestedProducts=validated_data.pop('requests')
+        branch=Branches_Requests.objects.create(**validated_data)
+        request_status_pending = Request_Status.objects.get(id=1) 
+        
+        for req_product in RequestedProducts:
+            req_product['status'] = request_status_pending
+            Requested_Products.objects.create(request_id=branch,**req_product)
+            
+
+        return branch
+
+
+class PurchasedProductsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Purchased_Products
+        fields=['product_id','wholesale_price','selling_price','purchased_quantity']
+        extra_kwargs = {
+            "wholesale_price":{
+                "read_only":True
+            },
+            "selling_price":{
+                "read_only":True
+            }
+            
+        }
+class PurchaseSerializer(serializers.ModelSerializer):
+    
+    products=PurchasedProductsSerializer(many=True)
+    
+
+
+
+    class Meta:
+        model=Purchase
+        fields=['purchase_id','branch_id','date_of_purchase','customer_id','products']
+        
+    
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        products_data = validated_data['products']
+        error = {
+            "purchaced_products":[
+                
+            ]
+        }
+        products = []
+         
+        for index , product_data in enumerate(products_data):
+            if(product_data['product_id'] in products):
+                error['purchaced_products'].append({"product":f" repeated product in the {index+1}th product "})
+
+            products.append(product_data['product_id'])
+            try:
+                product_instance = Branch_Products.objects.get(product=product_data['product_id'] , branch = validated_data['branch_id'])
+                if product_data['purchased_quantity'] > product_instance.quantity:
+                    error['purchaced_products'].append({"quantity":f"we don't have that much in the branch warehouse for the {index+1}th product , we only have {product_instance.quantity} "})
+            except Branch_Products.DoesNotExist:
+                product_in_other_branches = Branch_Products.objects.filter(product=product_data['product_id'])
+                product_in_other_branches_serialized = BranchProductsSerializer(many=True , data=product_in_other_branches)
+                product_in_other_branches_serialized.is_valid()
+                error['purchaced_products'].append({
+                    "product":f"we don't have that product in this branch warehouse for the {index+1}th product ",
+                    "other_options":product_in_other_branches_serialized.data
+                    })
+                
+        if len(error['purchaced_products']) > 0:
+            raise serializers.ValidationError(error)
+        else:
+            return validated_data
+                
+
+    
+    def __init__(self,*args,**kwargs):
+        super(PurchaseSerializer,self).__init__(*args, **kwargs)
+        request=kwargs['context']['request']
+        if request.method in ["POST","PUT"]:
+            if 'products' in self.initial_data:
+                purchased_products = self.initial_data['products']
+                thereIsPhone = False
+                for purchace_product in purchased_products:
+                    product_instance = Product.objects.get(id=purchace_product['product_id'])
+                    if product_instance.category_type.category_name == 'Phone':
+                        thereIsPhone=True
+                        break
+                if thereIsPhone==True:
+                    self.fields['customer_id'].required=True
+                    
+    def create(self, validated_data):
+        purchased_products=validated_data.pop('products')
+        purchase=Purchase.objects.create(**validated_data)
+        for product in purchased_products:
+            product_instance = Branch_Products.objects.get(product=product['product_id'] , branch = validated_data['branch_id'])
+            main_product_instance = Product.objects.get(id=product['product_id'].id)
+            product_instance.quantity -= product['purchased_quantity']
+            product['wholesale_price'] = main_product_instance.wholesale_price
+            product['selling_price'] = main_product_instance.selling_price
+            product_instance.save()
+            Purchased_Products.objects.create(purchase_id=purchase,**product)
+            
+
+        return purchase
+    

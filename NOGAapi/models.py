@@ -2,6 +2,9 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 # Create your models here.
 
+def upload_to(instance, filename):
+    return 'images/{filename}'.format(filename=filename)
+
 class City(models.Model):
     def __str__(self) -> str:
         return self.city_name
@@ -37,11 +40,12 @@ class Employee(models.Model):
     date_of_employment=models.DateField()
     job_type=models.ForeignKey(Job_Type,on_delete=models.PROTECT,default=1)        
     branch = models.ForeignKey(Branch ,on_delete=models.SET_NULL , null=True)
+    image = models.ImageField(upload_to=upload_to, blank=True, null=True)
 
 class User(AbstractUser):
     username = models.CharField(max_length=100 , unique=True)
     password = models.CharField(max_length=100)
-    employee = models.OneToOneField(Employee , on_delete=models.PROTECT , null=True)
+    employee = models.OneToOneField(Employee , on_delete=models.CASCADE , null=True)
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS=[]
     def __str__(self) -> str:
@@ -78,9 +82,10 @@ class Product(models.Model):
     product_name=models.CharField(max_length=100)
     wholesale_price=models.IntegerField()
     selling_price=models.IntegerField()
-    quantity=models.IntegerField()
+    quantity=models.PositiveIntegerField()
     category_type=models.ForeignKey(Products_Categories,on_delete=models.PROTECT,default=1)
-    qr_code = models.FileField(upload_to='QR/' , null=True)
+    qr_code = models.CharField(max_length=300 , null=True)
+    qr_codes_download = models.CharField(max_length=300 , null=True)
 
 
 #----new----
@@ -146,7 +151,7 @@ class Phones_Accessories(models.Model):
     
     
 class Entry_process(models.Model):
-    date_of_process = models.DateField()
+    date_of_process = models.DateField(auto_now_add=True)
     
     @property
     def entered_products(self):
@@ -155,19 +160,19 @@ class Entry_process(models.Model):
 class Entered_Product(models.Model):
     process = models.ForeignKey(Entry_process , on_delete=models.CASCADE)
     product = models.ForeignKey(Product,on_delete=models.DO_NOTHING)
-    quantity = models.IntegerField()
+    quantity = models.PositiveIntegerField()
     wholesale_price=models.IntegerField(null=True)
     selling_price=models.IntegerField(null=True)
     
 class Branch_Products(models.Model):
     branch = models.ForeignKey(Branch , on_delete=models.PROTECT)
     product = models.ForeignKey(Product , on_delete=models.PROTECT)
-    quantity = models.IntegerField()
+    quantity = models.PositiveIntegerField()
     
     
 class Products_Movment(models.Model):
     branch = models.ForeignKey(Branch , on_delete=models.PROTECT)
-    date_of_process = models.DateField()
+    date_of_process = models.DateField(auto_now_add=True)
     movement_type = models.BooleanField()
     
     @property
@@ -179,4 +184,41 @@ class Transported_Product(models.Model):
     product = models.ForeignKey(Product , on_delete=models.PROTECT)
     wholesale_price  = models.IntegerField()
     selling_price = models.IntegerField()
-    quantity = models.IntegerField()
+    quantity = models.PositiveIntegerField()
+    
+    
+#------Request----   
+class Branches_Requests(models.Model):
+    @property
+    def requests(self):
+         return self.requested_products_set.all()
+    branch_id=models.ForeignKey(Branch,on_delete=models.CASCADE)
+    date_of_request=models.DateField(auto_now_add=True)
+    note=models.CharField(max_length=150 , null=True)
+
+class Request_Status(models.Model):
+    status=models.CharField(max_length=10)
+
+class Requested_Products(models.Model):
+    request_id=models.ForeignKey(Branches_Requests,on_delete=models.CASCADE)
+    product_id=models.ForeignKey(Product,on_delete=models.CASCADE)
+    quantity=models.PositiveIntegerField()
+    status=models.ForeignKey(Request_Status,on_delete=models.CASCADE)
+
+#------Purchase----
+class Purchase(models.Model):
+    @property
+    def products(self):
+         return self.purchased_products_set.all()
+    purchase_id=models.BigAutoField(primary_key=True,auto_created=True)
+    branch_id=models.ForeignKey(Branch,on_delete=models.PROTECT)
+    customer_id=models.ForeignKey(Customer,null=True,on_delete=models.PROTECT)
+    date_of_purchase=models.DateField(auto_now_add=True)
+
+
+class Purchased_Products(models.Model):
+    purchase_id=models.ForeignKey(Purchase,on_delete=models.CASCADE)
+    product_id=models.ForeignKey(Product,on_delete=models.PROTECT)
+    wholesale_price=models.IntegerField()
+    selling_price=models.IntegerField()
+    purchased_quantity=models.PositiveIntegerField()

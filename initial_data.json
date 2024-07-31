@@ -250,5 +250,33 @@
         "fields":{
             "category_name" : "Covers"
         }
+    },
+    {
+        "model":"NOGAapi.Request_Status",
+        "pk": 1,
+        "fields":{
+            "status" : "pending"
+        }
+    },
+    {
+        "model":"NOGAapi.Request_Status",
+        "pk": 2,
+        "fields":{
+            "status" : "fully accepted"
+        }
+    },
+    {
+        "model":"NOGAapi.Request_Status",
+        "pk": 3,
+        "fields":{
+            "status" : "partially accepted"
+        }
+    },
+    {
+        "model":"NOGAapi.Request_Status",
+        "pk": 4,
+        "fields":{
+            "status" : "rejected"
+        }
     }
   ]

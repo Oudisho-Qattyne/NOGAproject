@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view , permission_classes
 from rest_framework import status
 from rest_framework import generics
 from .serializers import UserSerializer
@@ -15,7 +15,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .authentication import create_access_token , create_refresh_token
 from .permissions import *
 from .pagenation import Paginator
-from .customFilters import *
+from rest_framework.parsers import MultiPartParser, FormParser
 # Create your views here.
 
 
@@ -56,6 +56,7 @@ class EmployeesApiView(generics.ListAPIView,generics.ListCreateAPIView):
     serializer_class=EmployeeSerializer
     permission_classes=[IsHROrCEO , PermissionOnEmployees]
     pagination_class = Paginator
+    # parser_classes = (MultiPartParser, FormParser)
     filter_backends=[filter.DjangoFilterBackend , filters.SearchFilter , filters.OrderingFilter]
     filterset_fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','gender','job_type' , 'branch' , 'phone']
     search_fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','gender' , 'phone' ]
@@ -472,4 +473,201 @@ class AccessoryCategoryAPIView(generics.RetrieveUpdateDestroyAPIView):
 #         "result" : data
 #     })
     
+class BranchesRequestsAPIView(generics.ListCreateAPIView):
+    pagination_class = Paginator
+    queryset=Branches_Requests.objects.all()
+    serializer_class=BranchesRequestsSerializer
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields=['branch_id' , 'date_of_request']
+    search_fields = ['branch_id' , 'date_of_request' , 'note'] 
+    ordering_fields = ['branch_id' , 'date_of_request']
     
+class BrancheRequestAPIView(generics.RetrieveAPIView):
+    queryset=Branches_Requests.objects.all()
+    serializer_class=BranchesRequestsSerializer
+
+class RequestStatusAPIView(generics.ListCreateAPIView):
+    queryset=Request_Status.objects.all()
+    serializer_class=RequestStatusSerializer
+
+@api_view(['POST'])
+def RejectAllRequistedProducts(request):
+    if 'request_id' not in request.data:
+        return Response({"request_id" : "required"} , status=status.HTTP_400_BAD_REQUEST)
+        
+    request_id = request.data['request_id']
+    requested_products_instances = Requested_Products.objects.filter(request_id=request_id)
+    if len(requested_products_instances) == 0:
+        return Response({'error': 'this request has no products requests '}, status=status.HTTP_404_NOT_FOUND)
+    request_status_pending = Request_Status.objects.get(id=1) 
+    request_status_fully_accept = Request_Status.objects.get(id=2) 
+    request_status_partly_accept = Request_Status.objects.get(id=3) 
+    request_status_reject = Request_Status.objects.get(id=4) 
+    error = {
+        "products_requests" : []
+    }
+    
+    for index , requested_products_instance in enumerate(requested_products_instances):
+        if  requested_products_instance.status in [request_status_partly_accept, request_status_fully_accept]:
+            error['products_requests'].append({index+1 : "product request already processed"})
+            
+    if len(error['products_requests']) > 0:
+        return Response(error , status=status.HTTP_400_BAD_REQUEST)
+    
+    for requested_products_instance in requested_products_instances:
+        requested_products_instance.status = request_status_reject
+        requested_products_instance.save()
+    
+    
+    return Response({"message" : "all requests are rejected" }, status=status.HTTP_200_OK )
+
+@api_view(['POST'])
+@permission_classes([IsWarehouseAdministrator])
+def RejectRequistedProduct(request):
+    if 'product_request_id' not in request.data:
+        return Response({"product_request_id" : "required"} , status=status.HTTP_400_BAD_REQUEST)
+        
+    
+    product_request_id = request.data['product_request_id']
+    request_status_pending = Request_Status.objects.get(id=1) 
+    request_status_fully_accept = Request_Status.objects.get(id=2) 
+    request_status_partly_accept = Request_Status.objects.get(id=3) 
+    request_status_reject = Request_Status.objects.get(id=4) 
+    try:
+        products_request_instance = Requested_Products.objects.get(id=product_request_id)
+        if products_request_instance.status in [request_status_fully_accept , request_status_partly_accept , request_status_reject] :
+            return Response({"message" : "product request already processed"} , status=status.HTTP_400_BAD_REQUEST)
+        products_request_instance.status = request_status_reject
+        products_request_instance.save()
+        
+        return Response({"message" : "rejected" }, status=status.HTTP_200_OK )
+
+    except Requested_Products.DoesNotExist:
+        return Response({'error': 'product request not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+@api_view(['POST'])
+@permission_classes([IsWarehouseAdministrator])
+def ProcessRequestedProduct(request):
+    if 'product_request_id' not in request.data:
+        return Response({"product_request_id" : "required"} , status=status.HTTP_400_BAD_REQUEST)
+
+    if 'quantity' not in request.data:
+        return Response({"quantity" : "required"} , status=status.HTTP_400_BAD_REQUEST)
+    
+    product_request_id = request.data['product_request_id']
+    quantity = request.data['quantity']
+    if quantity <= 0:
+        return Response({"quantity" : "invalid quantity"} , status=status.HTTP_400_BAD_REQUEST)
+        
+    request_status_pending = Request_Status.objects.get(id=1) 
+    request_status_fully_accept = Request_Status.objects.get(id=2) 
+    request_status_partly_accept = Request_Status.objects.get(id=3) 
+    request_status_reject = Request_Status.objects.get(id=4) 
+    try:
+        products_request_instance = Requested_Products.objects.get(id=product_request_id)
+        try:
+            product_instance = Product.objects.get(id=products_request_instance.product_id.id)
+        except Product.DoesNotExist:
+            return Response({'error': 'product not found'}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            branch_request = Branches_Requests.objects.get(id=products_request_instance.request_id.id)
+        except Branches_Requests.DoesNotExist:
+            return Response({'error': 'request not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        if products_request_instance.status in [request_status_fully_accept , request_status_partly_accept , request_status_reject] :
+            return Response({"message" : "product request already processed"} , status=status.HTTP_400_BAD_REQUEST)
+        if quantity > product_instance.quantity:
+            return Response({"message" : f"we don't have this quantity in the main warehouse, we have only {product_instance.quantity}"} , status=status.HTTP_400_BAD_REQUEST)
+        
+        products_movment_instance = Products_Movment.objects.create(branch=branch_request.branch_id , movement_type=True)    
+        transported_product_instance = Transported_Product.objects.create(process = products_movment_instance , product=product_instance , wholesale_price=product_instance.wholesale_price , selling_price=product_instance.selling_price , quantity=products_request_instance.quantity)
+        try:
+            branch_product_instance = Branch_Products.objects.get(branch=products_movment_instance.branch , product=transported_product_instance.product)
+            branch_product_instance.quantity += quantity
+            product_instance.quantity -= quantity
+        except Branch_Products.DoesNotExist:
+            branch_product_instance = Branch_Products.objects.create(product=transported_product_instance.product , branch = products_movment_instance.branch , quantity = transported_product_instance.quantity)
+            product_instance.quantity -= quantity
+        
+        products_movment_instance.save()
+        transported_product_instance.save()
+        branch_product_instance.save()
+        product_instance.save()
+        message = {"message" : "accepted" }
+        if products_request_instance.quantity > quantity:
+            products_request_instance.status = request_status_partly_accept
+            message['message'] = 'partly_accepted'
+        elif products_request_instance.quantity <= quantity:
+            products_request_instance.status = request_status_fully_accept
+            message['message'] = 'fully_accepted'
+        
+        products_request_instance.save()
+            
+        return Response(message, status=status.HTTP_200_OK )
+
+    except Requested_Products.DoesNotExist:
+        return Response({'error': 'product request not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+@api_view(['POST'])
+@permission_classes([IsWarehouseAdministrator])
+def ProcessAllRequestedProducts(request):
+    if 'request_id' not in request.data:
+        return Response({"request_id" : "required"} , status=status.HTTP_400_BAD_REQUEST)
+    request_id = request.data['request_id']
+    
+    request_status_pending = Request_Status.objects.get(id=1) 
+    request_status_fully_accept = Request_Status.objects.get(id=2) 
+    request_status_partly_accept = Request_Status.objects.get(id=3) 
+    request_status_reject = Request_Status.objects.get(id=4) 
+    error = {
+        "products_requests" : []
+    }
+    try:
+        branch_request = Branches_Requests.objects.get(id=request_id)
+    except Branches_Requests.DoesNotExist:
+        return Response({'error': 'request not found'}, status=status.HTTP_404_NOT_FOUND)
+    requested_products_instances = Requested_Products.objects.filter(request_id=request_id)
+    
+    if len(requested_products_instances) == 0:
+        return Response({'error': 'this request has no products requests '}, status=status.HTTP_404_NOT_FOUND)
+    
+    for index , requested_products_instance in enumerate(requested_products_instances):
+        try:
+            product_instance = Product.objects.get(id=requested_products_instance.product_id.id)
+            if  requested_products_instance.status in [request_status_partly_accept, request_status_fully_accept]:
+                error['products_requests'].append({index+1 : "product request already processed"})
+            if product_instance.quantity < requested_products_instance.quantity:
+                error['products_requests'].append({index+1 : f"we don't have this quantity in the main warehouse, we have only {product_instance.quantity}"})    
+        except Product.DoesNotExist:
+            error['products_requests'].append({index: 'product not found'})
+       
+    if len(error['products_requests']) > 0:
+        return Response(error , status=status.HTTP_400_BAD_REQUEST)
+    
+    for requested_products_instance in requested_products_instances:
+        product_instance = Product.objects.get(id=requested_products_instance.product_id.id)
+        products_movment_instance = Products_Movment.objects.create(branch=branch_request.branch_id , movement_type=True)    
+        transported_product_instance = Transported_Product.objects.create(process = products_movment_instance , product=product_instance , wholesale_price=product_instance.wholesale_price , selling_price=product_instance.selling_price , quantity=requested_products_instance.quantity)
+        try:
+            branch_product_instance = Branch_Products.objects.get(branch=products_movment_instance.branch , product=transported_product_instance.product)
+            branch_product_instance.quantity += requested_products_instance.quantity
+            product_instance.quantity -= requested_products_instance.quantity
+        except Branch_Products.DoesNotExist:
+            branch_product_instance = Branch_Products.objects.create(product=transported_product_instance.product , branch = products_movment_instance.branch , quantity = transported_product_instance.quantity)
+            product_instance.quantity -= requested_products_instance.quantity
+        products_movment_instance.save()
+        transported_product_instance.save()
+        branch_product_instance.save()
+        product_instance.save()
+        
+        requested_products_instance.status = request_status_fully_accept
+        requested_products_instance.save()
+    return Response({"message" : "all requests are fully accepted" }, status=status.HTTP_200_OK )
+        
+
+#-------------------
+#------------purchase----------
+class PurchaseAPIView(generics.ListCreateAPIView):
+    queryset=Purchase.objects.all()
+    pagination_class = Paginator
+    serializer_class=PurchaseSerializer

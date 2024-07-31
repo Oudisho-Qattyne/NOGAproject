@@ -73,14 +73,35 @@ urlpatterns = [
     path('accessories_categories' , AccessoriesCategoriesAPIView.as_view()),
     path('accessories_categories/<int:pk>' , AccessoryCategoryAPIView.as_view()),
     
+
+    
     
 # -----------------------Products-----------------------
+
     
     path('products' , ProductsApiview.as_view()),
     path('products/<int:pk>' , ProductApiview.as_view()),
+    
     path('products/enter_products' , EntryProcessApiView.as_view()),
+    
     path('products/transport' , ProductsMovmentApiView.as_view()),
-    path('products/branch' , BranchesProductsApiView.as_view())
+    
+    path('products/branch' , BranchesProductsApiView.as_view()),
+    
+    path('request-status' , RequestStatusAPIView.as_view()),
+    path('products/request' , BranchesRequestsAPIView.as_view()),
+    path('products/request/<int:pk>' , BrancheRequestAPIView.as_view()),
+    path('products/request/reject-all' , RejectAllRequistedProducts),
+    path('products/request/accept-all' , ProcessAllRequestedProducts),
+    path('products/request/reject' , RejectRequistedProduct),
+    path('products/request/process' , ProcessRequestedProduct),
+    
+    
+# -----------------------Purchase-----------------------
+    
+    
+    path('purchase' , PurchaseAPIView.as_view()),
+    
     
     
 ]
