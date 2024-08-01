@@ -15,7 +15,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .authentication import create_access_token , create_refresh_token
 from .permissions import *
 from .pagenation import Paginator
-from rest_framework.parsers import MultiPartParser, FormParser
+# from rest_framework.parsers import MultiPartParser, FormParser
 # Create your views here.
 
 
