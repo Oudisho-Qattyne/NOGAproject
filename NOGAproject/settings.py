@@ -192,7 +192,7 @@ CORS_ALLOW_HEADERS = [
 ]
 
 STATIC_URL = 'static/'
-
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'mediafiles')
