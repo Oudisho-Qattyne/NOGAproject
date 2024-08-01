@@ -35,7 +35,7 @@ if not DEBUG:    # Tell Django to copy static assets into a path called `staticf
 
 # added for deploy the project to vercel
 
-ALLOWED_HOSTS = ['.vercel.app', '.now.sh' ,  '127.0.0.1' ]
+ALLOWED_HOSTS = ['nogaproject.onrender.com', '.now.sh' ,  '127.0.0.1' ]
 
 # Application definition
 
