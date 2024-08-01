@@ -99,7 +99,7 @@ WSGI_APPLICATION = 'NOGAproject.wsgi.application'
 # }
 
 DATABASES = {
-    "default": dj_database_url.parse("postgresql://nogadb_w2vx_user:Eap124mUkGvfEYMVf5B7UbEtsYXZPgjo@dpg-cqlrpug8fa8c73brkup0-a.singapore-postgres.render.com/nogadb_w2vx")
+    "default": dj_database_url.parse(os.environ.get("DATABASE_URL"))
 }
 
 # Password validation
