@@ -197,7 +197,7 @@ class Branches_Requests(models.Model):
     note=models.CharField(max_length=150 , null=True)
 
 class Request_Status(models.Model):
-    status=models.CharField(max_length=10)
+    status=models.CharField(max_length=100)
 
 class Requested_Products(models.Model):
     request_id=models.ForeignKey(Branches_Requests,on_delete=models.CASCADE)
