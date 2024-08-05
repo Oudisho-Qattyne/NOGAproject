@@ -181,7 +181,7 @@ class CPUSerializer(serializers.ModelSerializer):
 class PhoneCamerasSerializer(serializers.ModelSerializer):
     class Meta:
         model = Phone_Cameras
-        fields = ['camera_resolution' , 'main']
+        fields = ['id' ,'camera_resolution' , 'main']
 
 class PhoneSerializer(serializers.ModelSerializer):
     brand = serializers.StringRelatedField(source='brand_id')
@@ -306,11 +306,11 @@ class ProductSerializer(serializers.ModelSerializer):
                        
                 
     def create(self, validated_data):
-        
+       
         if validated_data['category_type'].category_name == "Phone":
             phone_data = validated_data.pop('phone')
-            product_instance = Product.objects.create(**validated_data)
             phone_cameras_data = phone_data.pop('phone_cameras' , None)
+            product_instance = Product.objects.create(**validated_data)
             phone_instance = Phone.objects.create(product=product_instance,**phone_data)
             file_name = f"product-{product_instance.id}.png"
             download_file_name = f"product-{product_instance.id}-download.jpg"
@@ -326,18 +326,35 @@ class ProductSerializer(serializers.ModelSerializer):
             download_image.save(download_file_path)
             product_instance.qr_code = f"{self.context.get('request').build_absolute_uri('/')}media/productqr/{file_name}"
             product_instance.qr_codes_download = f"{self.context.get('request').build_absolute_uri('/')}media/productqr/{download_file_name}"
+            product_instance.save()
+            
             if phone_cameras_data:
                 for phone_camera_data in phone_cameras_data:
                     phone_camera_instanse = Phone_Cameras.objects.create(product = phone_instance , **phone_camera_data)
                     phone_camera_instanse.save()
             phone_instance.save()
                 
-            
+            print(product_instance.qr_codes_download)
             return product_instance
         
         if validated_data['category_type'].category_name == "Accessory":
             accessory_data = validated_data.pop('accessory')
             product_instance = Product.objects.create(**validated_data)
+            file_name = f"product-{product_instance.id}.png"
+            download_file_name = f"product-{product_instance.id}-download.jpg"
+            path = f'mediafiles/productqr'
+            file_path = f"{path}/{file_name}"
+            download_file_path = f"{path}/{download_file_name}"
+            qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_L, box_size=5, border=3)
+            qr.add_data(f"product-{product_instance.id}")
+            qr.make(fit=True)
+            qr_img = qr.make_image(fill_color="black", back_color="white")
+            qr_img.save(file_path, 'PNG')
+            download_image = genereate(file_path , f"{product_instance.product_name}")
+            download_image.save(download_file_path)
+            product_instance.qr_code = f"{self.context.get('request').build_absolute_uri('/')}media/productqr/{file_name}"
+            product_instance.qr_codes_download = f"{self.context.get('request').build_absolute_uri('/')}media/productqr/{download_file_name}"
+            product_instance.save()
             accessory_instance = Accessory.objects.create(product=product_instance,**accessory_data)
             accessory_instance.save()
             
