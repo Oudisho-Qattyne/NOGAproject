@@ -15,9 +15,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .authentication import create_access_token , create_refresh_token
 from .permissions import *
 from .pagenation import Paginator
-from slick_reporting.views import ReportView, Chart
-from slick_reporting.fields import ComputationField
-from django.db.models import Sum , Count
+
 # from rest_framework.parsers import MultiPartParser, FormParser
 # Create your views here.
 
