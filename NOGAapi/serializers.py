@@ -263,7 +263,7 @@ def genereate(image_url , product):
             draw = ImageDraw.Draw(img)
             new_image.paste(img , (img.width*i,img.height*j))
     draw = ImageDraw.Draw(new_image)
-    draw.text((10, A4.height-20), "Noga project 2024" , fill='Black' )
+    draw.text((10, A4.height-20), "NOGA project 2024" , fill='Black' )
     draw.text((300, A4.height-20), product , fill='Black' )
     return new_image
                
