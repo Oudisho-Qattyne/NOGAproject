@@ -242,7 +242,7 @@ class ProductSerializerForSale(serializers.ModelSerializer):
     accessory = AccessorySerializer()
     class Meta:
         model=Product
-        fields=['product_name','category_type','category_name' , 'quantity', 'phone' , 'accessory' , 'wholesale_price' , 'selling_price' , 'qr_code' , 'qr_codes_download']
+        fields=['id','product_name','category_type','category_name' , 'quantity', 'phone' , 'accessory' , 'wholesale_price' , 'selling_price' , 'qr_code' , 'qr_codes_download']
         extra_kwargs={
             'category_name' : {
                 'read_only' : True,
