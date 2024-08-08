@@ -483,9 +483,9 @@ class BranchesRequestsAPIView(generics.ListCreateAPIView):
     queryset=Branches_Requests.objects.all()
     serializer_class=BranchesRequestsSerializer
     filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
-    filterset_fields=['branch_id' , 'date_of_request']
+    filterset_fields=['branch_id' , 'date_of_request' , 'processed']
     search_fields = ['branch_id' , 'date_of_request' , 'note'] 
-    ordering_fields = ['branch_id' , 'date_of_request']
+    ordering_fields = ['branch_id' , 'date_of_request' , 'processed']
     
 class BrancheRequestAPIView(generics.RetrieveAPIView):
     queryset=Branches_Requests.objects.all()
@@ -522,7 +522,9 @@ def RejectAllRequistedProducts(request):
     for requested_products_instance in requested_products_instances:
         requested_products_instance.status = request_status_reject
         requested_products_instance.save()
-    
+    branches_requests_instance = Branches_Requests.objects.get(id=request_id)
+    branches_requests_instance.processed = True
+    branches_requests_instance.save()
     
     return Response({"message" : "all requests are rejected" }, status=status.HTTP_200_OK )
 
@@ -544,6 +546,22 @@ def RejectRequistedProduct(request):
             return Response({"message" : "product request already processed"} , status=status.HTTP_400_BAD_REQUEST)
         products_request_instance.status = request_status_reject
         products_request_instance.save()
+        
+        requested_products_instances = Requested_Products.objects.filter(request_id=products_request_instance.request_id.id)
+        branch_request = Branches_Requests.objects.get(id=products_request_instance.request_id.id)
+        
+        pending_requests = False
+        for requested_products_instance in requested_products_instances:
+            if requested_products_instance.status == request_status_pending:
+                pending_requests = True
+                break
+        
+        if pending_requests:
+            branch_request.processed = False
+        else :
+            branch_request.processed = True
+            
+        branch_request.save()
         
         return Response({"message" : "rejected" }, status=status.HTTP_200_OK )
 
@@ -593,8 +611,21 @@ def ProcessRequestedProduct(request):
         except Branch_Products.DoesNotExist:
             branch_product_instance = Branch_Products.objects.create(product=transported_product_instance.product , branch = products_movment_instance.branch , quantity = transported_product_instance.quantity)
             product_instance.quantity -= quantity
+            
+        requested_products_instances = Requested_Products.objects.filter(request_id=branch_request.id)
+        pending_requests = False
+        for requested_products_instance in requested_products_instances:
+            if requested_products_instance.status == request_status_pending:
+                pending_requests = True
+                break
         
-        products_movment_instance.save()
+        if pending_requests:
+            branch_request.processed = False
+        else :
+            branch_request.processed = True
+            
+        branch_request.save()
+        
         transported_product_instance.save()
         branch_product_instance.save()
         product_instance.save()
@@ -664,7 +695,9 @@ def ProcessAllRequestedProducts(request):
         transported_product_instance.save()
         branch_product_instance.save()
         product_instance.save()
-        
+        branches_requests_instance = Branches_Requests.objects.get(id=request_id)
+        branches_requests_instance.processed = True
+        branches_requests_instance.save()
         requested_products_instance.status = request_status_fully_accept
         requested_products_instance.save()
     return Response({"message" : "all requests are fully accepted" }, status=status.HTTP_200_OK )

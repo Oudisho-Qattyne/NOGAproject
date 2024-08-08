@@ -195,6 +195,7 @@ class Branches_Requests(models.Model):
     branch_id=models.ForeignKey(Branch,on_delete=models.CASCADE)
     date_of_request=models.DateField(auto_now_add=True)
     note=models.CharField(max_length=150 , null=True)
+    processed = models.BooleanField(default=False)
 
 class Request_Status(models.Model):
     status=models.CharField(max_length=100)

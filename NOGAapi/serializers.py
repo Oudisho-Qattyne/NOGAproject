@@ -709,10 +709,15 @@ class BranchesRequestsSerializer(serializers.ModelSerializer):
     requests=RequestedProductsSerializer(many=True)
     class Meta:
         model=Branches_Requests
-        fields=['id','branch_id','date_of_request','note','requests']
-  
+        fields=['id','branch_id','date_of_request','note','requests' , 'processed']
+        extra_kwargs = {
+            "processed":{
+                "read_only":True
+            },
+        }
     def create(self, validated_data):
         RequestedProducts=validated_data.pop('requests')
+        validated_data['processed'] = False
         branch=Branches_Requests.objects.create(**validated_data)
         request_status_pending = Request_Status.objects.get(id=1) 
         
@@ -722,6 +727,9 @@ class BranchesRequestsSerializer(serializers.ModelSerializer):
             
 
         return branch
+    
+    def to_representation(self, instance):
+        return super().to_representation(instance)
 
 
 class PurchasedProductsSerializer(serializers.ModelSerializer):
