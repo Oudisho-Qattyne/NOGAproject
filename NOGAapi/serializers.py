@@ -9,7 +9,7 @@ from .models import *
 from datetime import datetime
 import qrcode
 from PIL import Image , ImageDraw
-
+from datetime import date
 import io
 class Job_TypeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -31,7 +31,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
                 "read_only" : True
             }
         }
-        
+    
+
     def get_branch_name(self , object):
         if(object.branch):
             return object.branch.city.city_name + " " + str(object.branch.number)
@@ -47,6 +48,21 @@ class EmployeeSerializer(serializers.ModelSerializer):
                 relatedBranches = branches.filter(manager= self.instance.id)
                 if(len(relatedBranches) > 0 ):
                     raise serializers.ValidationError({'manager' : ['this employee is a manager to a branche , change the manager on this branch then edit this employee']})
+        if request.method in ['POST' , "PUT"]:
+            date_of_employment = attrs['date_of_employment']
+            birth_date = attrs['birth_date']
+            if date_of_employment < birth_date:
+                raise serializers.ValidationError({
+                    "date_of_employment":"date of employment can't be before the birth date"
+                })
+            today = date.today()
+
+            eighteen_years_ago = today.replace(year=today.year - 18)
+
+            if birth_date >= eighteen_years_ago:
+                raise serializers.ValidationError({
+                    "birth_date":"too young"
+                })
         return super().validate(attrs)
 class UserSerializer(serializers.ModelSerializer):
     # employee=EmployeeSerializer()
@@ -87,6 +103,10 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             data['role'] = 'admin'
         else:
             data['role'] = self.user.employee.job_type.job_type
+            if(self.user.employee.branch):
+                data['branch'] = self.user.employee.branch.id
+                data['branch_name'] = self.user.employee.branch.city.city_name + " " + str(self.user.employee.branch.number) 
+                data['image'] = f"{self.context.get('request').build_absolute_uri('/')}{str(self.user.employee.image)}" 
         
         data["refresh"] = str(refresh)
         data["access"] = str(refresh.access_token)
@@ -251,6 +271,8 @@ class ProductSerializerForSale(serializers.ModelSerializer):
                 'required' : True
             }
         }
+# def genereate_employee_card(image_url , n):
+    
 def genereate(image_url , product):
     A4 = Image.open(f'mediafiles/productqr/A4.jpg')
     img = Image.open(image_url)
@@ -532,15 +554,25 @@ class TransportedProductsSerializer(serializers.ModelSerializer):
 class ProductsMovmentSerializer(serializers.ModelSerializer):
     # transported_products = TransportedProductsSerializer(many=True)
     transported_product = TransportedProductsSerializer(many=True)
+    branch_name = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
     class Meta:
         model = Products_Movment
-        fields = ['id' , 'branch' , 'date_of_process' , 'movement_type' , 'transported_product' ]
+        fields = ['id' , 'branch' , 'branch_name' , 'address'  , 'date_of_process' , 'movement_type' , 'transported_product' ]
         extra_kwargs = {
             "date_of_process":{
                 "read_only" : True
             },
 
         }
+    def get_branch_name(self , object):
+        if(object.branch):
+            return object.branch.city.city_name + " " + str(object.branch.number)
+        return 
+    def get_address(self , object):
+        if(object.branch):
+            return object.branch.street + ' , ' +  object.branch.area + ' , ' + object.branch.city.city_name
+        return 
     def validate(self, attrs):
         validated_data = super().validate(attrs)
         transported_products_data = validated_data['transported_product']
@@ -627,11 +659,20 @@ class ProductsMovmentSerializer(serializers.ModelSerializer):
     
 class BranchProductsSerializer(serializers.ModelSerializer):
     product = ProductSerializerForSale()
+    branch_name = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
     class Meta:
         model = Branch_Products
-        fields = ['branch' , 'product' , 'quantity']
+        fields = ['branch' , 'branch_name' , 'address' , 'product' , 'quantity']
         unique_together = ['branch', 'product']
-        
+    def get_branch_name(self , object):
+        if(object.branch):
+            return object.branch.city.city_name + " " + str(object.branch.number)
+        return 
+    def get_address(self , object):
+        if(object.branch):
+            return object.branch.street + ' , ' +  object.branch.area + ' , ' + object.branch.city.city_name
+        return     
 class BranchProductsForSalesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Branch_Products
@@ -699,15 +740,23 @@ class PurchasedProductsSerializer(serializers.ModelSerializer):
 class PurchaseSerializer(serializers.ModelSerializer):
     
     products=PurchasedProductsSerializer(many=True)
-    
+    branch_name = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
 
 
 
     class Meta:
         model=Purchase
-        fields=['purchase_id','branch_id','date_of_purchase','customer_id','products']
+        fields=['purchase_id','branch_id' , 'branch_name' , 'address','date_of_purchase','customer_id','products']
         
-    
+    def get_branch_name(self , object):
+        if(object.branch_id):
+            return object.branch_id.city.city_name + " " + str(object.branch_id.number)
+        return 
+    def get_address(self , object):
+        if(object.branch_id):
+            return object.branch_id.street + ' , ' +  object.branch_id.area + ' , ' + object.branch_id.city.city_name
+        return     
     def validate(self, attrs):
         validated_data = super().validate(attrs)
         products_data = validated_data['products']

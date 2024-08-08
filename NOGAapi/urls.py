@@ -102,6 +102,6 @@ urlpatterns = [
     
     path('purchase' , PurchaseAPIView.as_view()),
     
-    # path('statistics',TotalProductsSales)
+    path('statistics',TotalProductsSales)
     
 ]

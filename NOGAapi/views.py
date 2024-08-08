@@ -15,6 +15,8 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from .authentication import create_access_token , create_refresh_token
 from .permissions import *
 from .pagenation import Paginator
+from django.db.models.functions import TruncMonth
+from django.db.models import Count , Sum
 
 # from rest_framework.parsers import MultiPartParser, FormParser
 # Create your views here.
@@ -675,7 +677,20 @@ class PurchaseAPIView(generics.ListCreateAPIView):
     
     
 #---------ststistics--------
-# @api_view(["GET"])
-# def TotalProductsSales(request):
-    
-    
+@api_view(["GET"])
+def TotalProductsSales(request):
+    statistics=Purchased_Products.objects.annotate(month=TruncMonth('purchase_id__date_of_purchase'),c=Count('purchase_id__branch_id')).values('month','c').annotate(p=Count('product_id')).order_by('p').values('p')
+
+
+
+
+# Perform the query using Django ORM
+    query_result = Purchased_Products.objects.values('purchase_id__branch_id').annotate(month=TruncMonth('purchase_id__date_of_purchase')).values('month').annotate(total_quantity=Sum('purchased_quantity')).values('purchase_id__branch_id','product_id','month','total_quantity')
+
+    # Retrieve the results
+    return(Response(query_result ))
+    res = {}
+    for result in query_result:
+        product_id = result['product_id_id']
+        total_quantity = result['total_quantity']
+        print(f'Product ID: {product_id}, Total Purchased Quantity: {total_quantity}')
