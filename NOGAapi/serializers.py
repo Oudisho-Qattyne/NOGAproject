@@ -389,7 +389,7 @@ class ProductSerializer(serializers.ModelSerializer):
         instance.selling_price = validated_data.get('selling_price', instance.selling_price)
         instance.quantity = validated_data.get('quantity', instance.quantity)
         instance.category_type = validated_data.get('category_type', instance.category_type)
-        
+        instance.save()
         
         if validated_data['category_type'].category_name == "Phone":
             phone_data = validated_data.pop('phone')
@@ -432,7 +432,6 @@ class ProductSerializer(serializers.ModelSerializer):
                 phone_instance = Phone.objects.create(product=instance,**phone_data)
                 for phone_camera_data in phone_cameras_data:
                     phone_camera_instanse = Phone_Cameras.objects.create(product = phone_instance , **phone_camera_data)
-                
             #delete if there is unwanted accessory
                 
             try:
