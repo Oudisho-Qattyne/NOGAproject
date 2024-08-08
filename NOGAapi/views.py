@@ -480,7 +480,7 @@ class AccessoryCategoryAPIView(generics.RetrieveUpdateDestroyAPIView):
     
 class BranchesRequestsAPIView(generics.ListCreateAPIView):
     pagination_class = Paginator
-    queryset=Branches_Requests.objects.all()
+    queryset=Branches_Requests.objects.all().order_by('-date_of_request')
     serializer_class=BranchesRequestsSerializer
     filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
     filterset_fields=['branch_id' , 'date_of_request' , 'processed']
