@@ -106,7 +106,9 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
             if(self.user.employee.branch):
                 data['branch'] = self.user.employee.branch.id
                 data['branch_name'] = self.user.employee.branch.city.city_name + " " + str(self.user.employee.branch.number) 
+            if(self.user.employee.image):
                 data['image'] = f"{self.context.get('request').build_absolute_uri('/')}media/{str(self.user.employee.image)}" 
+            data['name'] = f"{self.user.employee.first_name} {self.user.employee.middle_name} {self.user.employee.last_name}"
         
         data["refresh"] = str(refresh)
         data["access"] = str(refresh.access_token)
