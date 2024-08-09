@@ -16,11 +16,18 @@ from .authentication import create_access_token , create_refresh_token
 from .permissions import *
 from .pagenation import Paginator
 from django.db.models.functions import TruncMonth
-from django.db.models import Count , Sum
+from django.db.models import Count , Sum , ExpressionWrapper , F
 
 # from rest_framework.parsers import MultiPartParser, FormParser
 # Create your views here.
 
+def validate_date_format(date_str):
+    try:
+        # Validate the date format as "yyyy-mm-dd"
+        datetime.strptime(date_str, '%Y-%m-%d')
+        return True  # Return True if the format is correct
+    except ValueError:
+        return False  # Return False if the format is incorrect
 
 # ----------------------job type------------------------
 
@@ -713,19 +720,91 @@ class PurchaseAPIView(generics.ListCreateAPIView):
     
 #---------ststistics--------
 @api_view(["GET"])
-def TotalProductsSales(request):
-    statistics=Purchased_Products.objects.annotate(month=TruncMonth('purchase_id__date_of_purchase'),c=Count('purchase_id__branch_id')).values('month','c').annotate(p=Count('product_id')).order_by('p').values('p')
-
-
-
-
-# Perform the query using Django ORM
-    query_result = Purchased_Products.objects.values('purchase_id__branch_id').annotate(month=TruncMonth('purchase_id__date_of_purchase')).values('month').annotate(total_quantity=Sum('purchased_quantity')).values('purchase_id__branch_id','product_id','month','total_quantity')
-
-    # Retrieve the results
-    return(Response(query_result ))
-    res = {}
-    for result in query_result:
-        product_id = result['product_id_id']
-        total_quantity = result['total_quantity']
-        print(f'Product ID: {product_id}, Total Purchased Quantity: {total_quantity}')
+def TotalnCome(request):
+    branch_id = request.query_params.get('branch_id', None)
+    month = request.query_params.get('month', None)
+    year = request.query_params.get('year', None)
+    day = request.query_params.get('day', None)
+        
+    if branch_id:
+        statistics=Purchased_Products.objects.filter(purchase_id__branch_id=branch_id)
+        if month:
+            if validate_date_format(month):
+                statistics = statistics.filter(purchase_id__date_of_purchase__year = month.split('-')[0] ,purchase_id__date_of_purchase__month = month.split('-')[1])
+                statistics = statistics.annotate(total=ExpressionWrapper(F('selling_price') * F('purchased_quantity'), output_field=models.DecimalField()) ).aggregate(total_income = Sum('total'))
+                if(statistics['total_income']):
+                    return(Response(statistics))
+                else:
+                    return(Response({'total_income':0.0}))
+            else: 
+                return Response({"month" : "invalid date" }, status=status.HTTP_400_BAD_REQUEST)
+        elif year:
+            if validate_date_format(year):
+                statistics = statistics.filter(purchase_id__date_of_purchase__year = year.split('-')[0])
+                statistics = statistics.annotate(total=ExpressionWrapper(F('selling_price') * F('purchased_quantity'), output_field=models.DecimalField()) ).aggregate(total_income = Sum('total'))
+                if(statistics['total_income']):
+                    return(Response(statistics))
+                else:
+                    return(Response({'total_income':0.0}))
+            else: 
+                return Response({"year" : "invalid date" }, status=status.HTTP_400_BAD_REQUEST)
+        elif day:
+            if validate_date_format(day):
+                statistics = statistics.filter(purchase_id__date_of_purchase__year = day.split('-')[0] ,purchase_id__date_of_purchase__day = day.split('-')[2] , purchase_id__date_of_purchase__month = day.split('-')[1])
+                
+                statistics = statistics.annotate(total=ExpressionWrapper(F('selling_price') * F('purchased_quantity'), output_field=models.DecimalField()) ).aggregate(total_income = Sum('total'))
+                if(statistics['total_income']):
+                    return(Response(statistics))
+                else:
+                    return(Response({'total_income':0.0}))
+            else: 
+                return Response({"day" : "invalid date" }, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            statistics = statistics.annotate(total=ExpressionWrapper(F('selling_price') * F('purchased_quantity'), output_field=models.DecimalField()) ).aggregate(total_income = Sum('total'))
+            if(statistics['total_income']):
+                return(Response(statistics))
+            else:
+                return(Response({'total_income':0.0}))
+            
+    else:
+        statistics=Purchased_Products.objects.all()
+        if month:
+            if validate_date_format(month):
+                statistics = statistics.filter(purchase_id__date_of_purchase__year = month.split('-')[0] , purchase_id__date_of_purchase__month = month.split('-')[1])
+                statistics = statistics.annotate(total=ExpressionWrapper(F('selling_price') * F('purchased_quantity'), output_field=models.DecimalField()) ).aggregate(total_income = Sum('total'))
+                if(statistics['total_income']):
+                    return(Response(statistics))
+                else:
+                    return(Response({'total_income':0.0}))
+            else: 
+                return Response({"month" : "invalid date" }, status=status.HTTP_400_BAD_REQUEST)
+        elif year:
+            if validate_date_format(year):
+                statistics = statistics.filter(purchase_id__date_of_purchase__year = year.split('-')[0])
+                
+                statistics = statistics.annotate(total=ExpressionWrapper(F('selling_price') * F('purchased_quantity'), output_field=models.DecimalField()) ).aggregate(total_income = Sum('total'))
+                if(statistics['total_income']):
+                    return(Response(statistics))
+                else:
+                    return(Response({'total_income':0.0}))
+            else: 
+                return Response({"year" : "invalid date" }, status=status.HTTP_400_BAD_REQUEST)
+        elif day:
+            if validate_date_format(day):
+                statistics = statistics.filter( purchase_id__date_of_purchase__year = day.split('-')[0] , purchase_id__date_of_purchase__day = day.split('-')[2] ,  purchase_id__date_of_purchase__month = day.split('-')[1])
+                
+                statistics = statistics.annotate(total=ExpressionWrapper(F('selling_price') * F('purchased_quantity'), output_field=models.DecimalField()) ).aggregate(total_income = Sum('total'))
+                if(statistics['total_income']):
+                    return(Response(statistics))
+                else:
+                    return(Response({'total_income':0.0}))
+            else: 
+                return Response({"day" : "invalid date" }, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            statistics = statistics.annotate(total=ExpressionWrapper(F('selling_price') * F('purchased_quantity'), output_field=models.DecimalField()) ).aggregate(total_income = Sum('total'))
+            if(statistics['total_income']):
+                return(Response(statistics))
+            else:
+                return(Response({'total_income':0.0}))
+   
+  
