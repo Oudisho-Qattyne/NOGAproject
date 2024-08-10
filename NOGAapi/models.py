@@ -1,9 +1,20 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from rest_framework import serializers
+
 # Create your models here.
 
 def upload_to(instance, filename):
     return 'images/{filename}'.format(filename=filename)
+
+MAX_IMAGE_SIZE = 2 * 1024 * 1024  # 2MB in bytes
+
+# Validate the size of uploaded images
+def validate_image_size(value):
+    if value.size > MAX_IMAGE_SIZE:
+        raise serializers.ValidationError("Image file size is too large (max 2MB)")
+
+
 
 class City(models.Model):
     def __str__(self) -> str:
@@ -40,7 +51,7 @@ class Employee(models.Model):
     date_of_employment=models.DateField()
     job_type=models.ForeignKey(Job_Type,on_delete=models.PROTECT,default=1)        
     branch = models.ForeignKey(Branch ,on_delete=models.SET_NULL , null=True)
-    image = models.ImageField(upload_to=upload_to, blank=True, null=True)
+    image = models.ImageField(upload_to=upload_to, blank=True, null=True , validators=[validate_image_size])
 
 class User(AbstractUser):
     username = models.CharField(max_length=100 , unique=True)

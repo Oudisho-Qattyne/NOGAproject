@@ -41,6 +41,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
         
         
     def validate(self, attrs):
+        validated_data =  super().validate(attrs)
         request= self.context['request']
         if request.method == 'PUT':
             if self.instance.job_type.job_type == "Manager":
@@ -49,8 +50,8 @@ class EmployeeSerializer(serializers.ModelSerializer):
                 if(len(relatedBranches) > 0 ):
                     raise serializers.ValidationError({'manager' : ['this employee is a manager to a branche , change the manager on this branch then edit this employee']})
         if request.method in ['POST' , "PUT"]:
-            date_of_employment = attrs['date_of_employment']
-            birth_date = attrs['birth_date']
+            date_of_employment = validated_data['date_of_employment']
+            birth_date = validated_data['birth_date']
             if date_of_employment < birth_date:
                 raise serializers.ValidationError({
                     "date_of_employment":"date of employment can't be before the birth date"
@@ -63,7 +64,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "birth_date":"too young"
                 })
-        return super().validate(attrs)
+        return validated_data
 class UserSerializer(serializers.ModelSerializer):
     # employee=EmployeeSerializer()
     
@@ -328,7 +329,13 @@ class ProductSerializer(serializers.ModelSerializer):
         #     elif category_type == 2:
         #         self.fields['phone'].read_only = False
                        
-                
+    def validate(self, attrs):
+        validated_data = super().validate(attrs)
+        wholesale_price = validated_data['wholesale_price']
+        selling_price = validated_data['selling_price']
+        if wholesale_price > selling_price:
+            raise serializers.ValidationError({"wholesale_price" : "wholesale_price can't be greater than selling_price"})
+        return validated_data
     def create(self, validated_data):
        
         if validated_data['category_type'].category_name == "Phone":
@@ -750,13 +757,14 @@ class PurchaseSerializer(serializers.ModelSerializer):
     
     products=PurchasedProductsSerializer(many=True)
     branch_name = serializers.SerializerMethodField()
+    customer_name = serializers.SerializerMethodField()
     address = serializers.SerializerMethodField()
 
 
 
     class Meta:
         model=Purchase
-        fields=['purchase_id','branch_id' , 'branch_name' , 'address','date_of_purchase','customer_id','products']
+        fields=['purchase_id','branch_id' , 'branch_name' , 'address','date_of_purchase','customer_id' , 'customer_name','products']
         
     def get_branch_name(self , object):
         if(object.branch_id):
@@ -766,6 +774,9 @@ class PurchaseSerializer(serializers.ModelSerializer):
         if(object.branch_id):
             return object.branch_id.street + ' , ' +  object.branch_id.area + ' , ' + object.branch_id.city.city_name
         return     
+    def get_customer_name(self , object):
+        if(object.customer_id):
+            return object.customer_id.first_name + " " + object.customer_id.middle_name + " " + object.customer_id.last_name 
     def validate(self, attrs):
         validated_data = super().validate(attrs)
         products_data = validated_data['products']

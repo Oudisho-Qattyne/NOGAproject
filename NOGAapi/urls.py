@@ -102,6 +102,20 @@ urlpatterns = [
     
     path('purchase' , PurchaseAPIView.as_view()),
     
-    path('income',TotalnCome)
+# -----------------------satistics-----------------------
+
+
+
+
+    path('income',TotalIncome),
+    path('income/branches',TotalIncomeAllBranch),
+    path('income/branches/<int:branch_id>',TotalIncomePerBranch),
     
+    path('earnings',TotaEarnings),
+    path('earnings/branches',TotalEarningAllBranch),
+    path('earnings/branches/<int:branch_id>',TotalEarningPerBranch),
+    
+    path('purchaced-products-quantities',TotalProducts),
+    path('purchaced-products-quantities/branches',TotalProductsAllBranch),
+    path('purchaced-products-quantities/branches/<int:branch_id>',TotalProductsPerBranch),
 ]
