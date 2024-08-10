@@ -244,9 +244,9 @@ class CustomersApiView(generics.ListCreateAPIView):
     serializer_class=CustomerSerializer
     pagination_class = Paginator
     filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
-    filterset_fields=['id' ,'national_number','first_name','middle_name','last_name']
-    search_fields = ['national_number','first_name','middle_name','last_name'] 
-    ordering_fields = ['id' ,'national_number','first_name','middle_name','last_name'] 
+    filterset_fields=['id' ,'national_number','first_name','middle_name','last_name' , 'phone' , 'gender']
+    search_fields = ['national_number','first_name','middle_name','last_name' , 'phone'] 
+    ordering_fields = ['id' ,'national_number','first_name','middle_name','last_name' , 'phone' , 'gender'] 
 
 class CustomerApiView(generics.RetrieveUpdateDestroyAPIView):
     queryset=Customer.objects.all()
@@ -309,7 +309,7 @@ class ProductsMovmentApiView(generics.ListCreateAPIView):
     filterset_fields=['branch__id' , 'movement_type' , 'date_of_process']
     search_fields = ['branch__id' ,'movement_type' , 'date_of_process'] 
     ordering_fields = ['branch__id' , 'movement_type' , 'date_of_process']
-    queryset=Products_Movment.objects.all()
+    queryset=Products_Movment.objects.all().order_by('-date_of_process')
     serializer_class=ProductsMovmentSerializer
     permission_classes=[IsAuthenticated]
 # ----------------------product movment to the branches's storage------------------------
