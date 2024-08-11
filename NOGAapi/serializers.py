@@ -714,15 +714,21 @@ class RequestStatusSerializer(serializers.ModelSerializer):
         fields='__all__'
         
 class BranchesRequestsSerializer(serializers.ModelSerializer):
-    requests=RequestedProductsSerializer(many=True)
+    requests=RequestedProductsSerializer(many=True)    
+    branch_name = serializers.SerializerMethodField()
+    
     class Meta:
         model=Branches_Requests
-        fields=['id','branch_id','date_of_request','note','requests' , 'processed']
+        fields=['id','branch_id','date_of_request','note','requests' , 'processed' , 'branch_name']
         extra_kwargs = {
             "processed":{
                 "read_only":True
             },
         }
+    def get_branch_name(self , object):
+        if(object.branch_id):
+            return object.branch_id.city.city_name + " " + str(object.branch_id.number)
+        return 
     def create(self, validated_data):
         RequestedProducts=validated_data.pop('requests')
         validated_data['processed'] = False

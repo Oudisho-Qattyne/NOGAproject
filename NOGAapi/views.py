@@ -330,9 +330,9 @@ class BranchesProductsApiView(generics.ListAPIView):
         max_value = self.request.query_params.get('max_price')
         
         if min_value is not None:
-            queryset = queryset.filter(product__wholesale_price__gte=min_value)
+            queryset = queryset.filter(product__selling_price__gte=min_value)
         if max_value is not None:
-            queryset = queryset.filter(product__wholesale_price__lte=max_value)
+            queryset = queryset.filter(product__selling_price__lte=max_value)
        
             
         return queryset
@@ -1017,7 +1017,7 @@ def TotalProducts(request):
     if month:
         if validate_date_format(month):
             statistics = statistics.filter(purchase_id__date_of_purchase__year = month.split('-')[0] ,purchase_id__date_of_purchase__month = month.split('-')[1])
-            statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity'))
+            statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity')).annotate(product_name = ExpressionWrapper(F("product_id__product_name") , output_field=models.CharField(max_length=100))).order_by("-total")
             
             if(statistics):
                 return(Response(statistics))
@@ -1028,7 +1028,7 @@ def TotalProducts(request):
     elif year:
         if validate_date_format(year):
             statistics = statistics.filter(purchase_id__date_of_purchase__year = year.split('-')[0])
-            statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity'))
+            statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity')).annotate(product_name = ExpressionWrapper(F("product_id__product_name") , output_field=models.CharField(max_length=100))).order_by("-total")
             
             if(statistics):
                 return(Response(statistics))
@@ -1039,7 +1039,7 @@ def TotalProducts(request):
     elif day:
         if validate_date_format(day):
             statistics = statistics.filter(purchase_id__date_of_purchase__year = day.split('-')[0] ,purchase_id__date_of_purchase__day = day.split('-')[2] , purchase_id__date_of_purchase__month = day.split('-')[1])
-            statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity'))
+            statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity')).annotate(product_name = ExpressionWrapper(F("product_id__product_name") , output_field=models.CharField(max_length=100))).order_by("-total")
             if(statistics):
                 return(Response(statistics))
             else:
@@ -1047,7 +1047,7 @@ def TotalProducts(request):
         else: 
             return Response({"day" : "invalid date" }, status=status.HTTP_400_BAD_REQUEST)
     else:
-        statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity'))
+        statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity')).annotate(product_name = ExpressionWrapper(F("product_id__product_name") , output_field=models.CharField(max_length=100))).order_by("-total")
             
         if(statistics):
             return(Response(statistics))
@@ -1065,7 +1065,7 @@ def TotalProductsPerBranch(request , branch_id):
     if month:
         if validate_date_format(month):
             statistics = statistics.filter(purchase_id__date_of_purchase__year = month.split('-')[0] ,purchase_id__date_of_purchase__month = month.split('-')[1])
-            statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity'))
+            statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity')).annotate(product_name = ExpressionWrapper(F("product_id__product_name") , output_field=models.CharField(max_length=100))).order_by("-total")
             
             if(statistics):
                 return(Response(statistics))
@@ -1076,7 +1076,7 @@ def TotalProductsPerBranch(request , branch_id):
     elif year:
         if validate_date_format(year):
             statistics = statistics.filter(purchase_id__date_of_purchase__year = year.split('-')[0])
-            statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity'))
+            statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity')).annotate(product_name = ExpressionWrapper(F("product_id__product_name") , output_field=models.CharField(max_length=100))).order_by("-total")
             
             if(statistics):
                 return(Response(statistics))
@@ -1087,7 +1087,7 @@ def TotalProductsPerBranch(request , branch_id):
     elif day:
         if validate_date_format(day):
             statistics = statistics.filter(purchase_id__date_of_purchase__year = day.split('-')[0] ,purchase_id__date_of_purchase__day = day.split('-')[2] , purchase_id__date_of_purchase__month = day.split('-')[1])
-            statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity'))
+            statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity')).annotate(product_name = ExpressionWrapper(F("product_id__product_name") , output_field=models.CharField(max_length=100))).order_by("-total")
             if(statistics):
                 return(Response(statistics))
             else:
@@ -1095,7 +1095,7 @@ def TotalProductsPerBranch(request , branch_id):
         else: 
             return Response({"day" : "invalid date" }, status=status.HTTP_400_BAD_REQUEST)
     else:
-        statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity'))
+        statistics=statistics.values("product_id").annotate(total=Sum('purchased_quantity')).annotate(product_name = ExpressionWrapper(F("product_id__product_name") , output_field=models.CharField(max_length=100))).order_by("-total")
             
         if(statistics):
             return(Response(statistics))
@@ -1110,6 +1110,7 @@ def calcBranchesProductsQuantities(statistics):
             res[branches[branch['purchase_id__branch_id']]]['products'].append(
                 {
                     "product_id":branch['product_id'],
+                    "product_name":branch['product_name'],
                     "total":branch['total']
                 }
             )
@@ -1121,6 +1122,7 @@ def calcBranchesProductsQuantities(statistics):
                 "products":[
                     {
                         "product_id":branch['product_id'],
+                        "product_name":branch['product_name'],
                         "total":branch['total']
                     }
                 ]
@@ -1138,7 +1140,7 @@ def TotalProductsAllBranch(request):
     if month:
         if validate_date_format(month):
             statistics = statistics.filter(purchase_id__date_of_purchase__year = month.split('-')[0] ,purchase_id__date_of_purchase__month = month.split('-')[1])
-            statistics=statistics.values('purchase_id__branch_id' , "product_id").annotate(total=Sum('purchased_quantity')).annotate(branch_name = ExpressionWrapper(Concat(F("purchase_id__branch_id__city__city_name") , F('purchase_id__branch_id__number')) , output_field=models.CharField(max_length=100)))
+            statistics=statistics.values('purchase_id__branch_id' , "product_id").annotate(total=Sum('purchased_quantity')).annotate(branch_name = ExpressionWrapper(Concat(F("purchase_id__branch_id__city__city_name") , F('purchase_id__branch_id__number')) , output_field=models.CharField(max_length=100))).annotate(product_name = ExpressionWrapper(F("product_id__product_name") , output_field=models.CharField(max_length=100))).order_by("-total")
             res = calcBranchesProductsQuantities(statistics)
             if(statistics):
                 return(Response(res))
@@ -1149,7 +1151,7 @@ def TotalProductsAllBranch(request):
     elif year:
         if validate_date_format(year):
             statistics = statistics.filter(purchase_id__date_of_purchase__year = year.split('-')[0])
-            statistics=statistics.values('purchase_id__branch_id' , "product_id").annotate(total=Sum('purchased_quantity')).annotate(branch_name = ExpressionWrapper(Concat(F("purchase_id__branch_id__city__city_name") , F('purchase_id__branch_id__number')) , output_field=models.CharField(max_length=100)))
+            statistics=statistics.values('purchase_id__branch_id' , "product_id").annotate(total=Sum('purchased_quantity')).annotate(branch_name = ExpressionWrapper(Concat(F("purchase_id__branch_id__city__city_name") , F('purchase_id__branch_id__number')) , output_field=models.CharField(max_length=100))).annotate(product_name = ExpressionWrapper(F("product_id__product_name") , output_field=models.CharField(max_length=100))).order_by("-total")
             res = calcBranchesProductsQuantities(statistics)
             if(statistics):
                 return(Response(res))
@@ -1160,7 +1162,7 @@ def TotalProductsAllBranch(request):
     elif day:
         if validate_date_format(day):
             statistics = statistics.filter(purchase_id__date_of_purchase__year = day.split('-')[0] ,purchase_id__date_of_purchase__day = day.split('-')[2] , purchase_id__date_of_purchase__month = day.split('-')[1])
-            statistics=statistics.values('purchase_id__branch_id' , "product_id").annotate(total=Sum('purchased_quantity')).annotate(branch_name = ExpressionWrapper(Concat(F("purchase_id__branch_id__city__city_name") , F('purchase_id__branch_id__number')) , output_field=models.CharField(max_length=100)))
+            statistics=statistics.values('purchase_id__branch_id' , "product_id").annotate(total=Sum('purchased_quantity')).annotate(branch_name = ExpressionWrapper(Concat(F("purchase_id__branch_id__city__city_name") , F('purchase_id__branch_id__number')) , output_field=models.CharField(max_length=100))).annotate(product_name = ExpressionWrapper(F("product_id__product_name") , output_field=models.CharField(max_length=100))).order_by("-total")
             res = calcBranchesProductsQuantities(statistics)
             if(statistics):
                 return(Response(res))
@@ -1169,11 +1171,16 @@ def TotalProductsAllBranch(request):
         else: 
             return Response({"day" : "invalid date" }, status=status.HTTP_400_BAD_REQUEST)
     else:
-        # 
-        statistics=statistics.values('purchase_id__branch_id' , "product_id").annotate(total=Sum('purchased_quantity')).annotate(branch_name = ExpressionWrapper(Concat(F("purchase_id__branch_id__city__city_name") , F('purchase_id__branch_id__number')) , output_field=models.CharField(max_length=100)))
+        statistics=statistics.values('purchase_id__branch_id' , "product_id").annotate(total=Sum('purchased_quantity')).annotate(branch_name = ExpressionWrapper(Concat(F("purchase_id__branch_id__city__city_name") , F('purchase_id__branch_id__number')) , output_field=models.CharField(max_length=100))).annotate(product_name = ExpressionWrapper(F("product_id__product_name") , output_field=models.CharField(max_length=100))).order_by("-total")
         res = calcBranchesProductsQuantities(statistics)
         if(statistics):
-            return(Response(set))
+            return(Response(res))
         else:
             return(Response([]))
  
+
+@api_view(['GET'])
+def getCustomersNumber(request):
+    customers = Customer.objects.all().count()
+    
+    return(Response({"customers_number" : customers}))
