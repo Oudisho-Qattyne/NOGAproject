@@ -19,6 +19,7 @@ class Job_TypeSerializer(serializers.ModelSerializer):
 class EmployeeSerializer(serializers.ModelSerializer):
     job_type_title=serializers.StringRelatedField(source='job_type')
     branch_name = serializers.SerializerMethodField()
+    # address = serializers.SerializerMethodField()
     class Meta:
         model=Employee
         fields=['id' , 'national_number','first_name','middle_name','last_name','email','salary','address','date_of_employment','birth_date','gender','job_type' , 'job_type_title' , 'branch' , 'phone' , 'branch_name' , 'image']
@@ -37,7 +38,10 @@ class EmployeeSerializer(serializers.ModelSerializer):
         if(object.branch):
             return object.branch.city.city_name + " " + str(object.branch.number)
         return 
-    
+    # def get_address(self , object):
+    #     if(object.branch):
+    #         return object.branch.street + ' , ' +  object.branch.area + ' , ' + object.branch.city.city_name
+    #     return     
         
         
     def validate(self, attrs):
@@ -716,10 +720,11 @@ class RequestStatusSerializer(serializers.ModelSerializer):
 class BranchesRequestsSerializer(serializers.ModelSerializer):
     requests=RequestedProductsSerializer(many=True)    
     branch_name = serializers.SerializerMethodField()
+    address = serializers.SerializerMethodField()
     
     class Meta:
         model=Branches_Requests
-        fields=['id','branch_id','date_of_request','note','requests' , 'processed' , 'branch_name']
+        fields=['id','branch_id','date_of_request','note','requests' , 'processed' , 'branch_name' , 'address']
         extra_kwargs = {
             "processed":{
                 "read_only":True
@@ -729,6 +734,10 @@ class BranchesRequestsSerializer(serializers.ModelSerializer):
         if(object.branch_id):
             return object.branch_id.city.city_name + " " + str(object.branch_id.number)
         return 
+    def get_address(self , object):
+        if(object.branch_id):
+            return object.branch_id.street + ' , ' +  object.branch_id.area + ' , ' + object.branch_id.city.city_name
+        return     
     def create(self, validated_data):
         RequestedProducts=validated_data.pop('requests')
         validated_data['processed'] = False

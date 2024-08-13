@@ -156,7 +156,8 @@ class UsersApiView(generics.ListAPIView ):
     permission_classes=[IsHROrCEO]
     pagination_class = Paginator
     filter_backends = [filter.DjangoFilterBackend , filters.SearchFilter , filters.OrderingFilter]
-    filterset_fields = ['username']
+    filter_backends = [filter.DjangoFilterBackend , filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields = ['employee__job_type' , "id" , 'username']
     search_fields = ['username']
     ordering_fields = ['username' , 'id']
     
@@ -1183,4 +1184,4 @@ def TotalProductsAllBranch(request):
 def getCustomersNumber(request):
     customers = Customer.objects.all().count()
     
-    return(Response({"customers_number" : customers}))
+    return(Response({'customers_number' : customers}))
