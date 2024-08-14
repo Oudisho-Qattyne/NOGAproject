@@ -756,9 +756,11 @@ class BranchesRequestsSerializer(serializers.ModelSerializer):
 
 
 class PurchasedProductsSerializer(serializers.ModelSerializer):
+    product_name = serializers.SerializerMethodField()
+    category_type = serializers.SerializerMethodField()
     class Meta:
         model=Purchased_Products
-        fields=['product_id','wholesale_price','selling_price','purchased_quantity']
+        fields=['product_id' , 'product_name' , 'category_type','wholesale_price','selling_price','purchased_quantity']
         extra_kwargs = {
             "wholesale_price":{
                 "read_only":True
@@ -768,6 +770,18 @@ class PurchasedProductsSerializer(serializers.ModelSerializer):
             }
             
         }
+    def get_product_name(self , object):
+        if object.product_id:
+            if object.product_id.category_type.category_name == 'Phone':
+                return object.product_id.phone.brand_id.brand_name + " " + object.product_id.product_name
+            else:
+                return object.product_id.product_name
+                
+    def get_category_type(self , object):
+        if object.product_id:
+            return object.product_id.category_type.category_name
+           
+        
 class PurchaseSerializer(serializers.ModelSerializer):
     
     products=PurchasedProductsSerializer(many=True)

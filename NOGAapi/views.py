@@ -716,6 +716,10 @@ def ProcessAllRequestedProducts(request):
 class PurchaseAPIView(generics.ListCreateAPIView):
     queryset=Purchase.objects.all()
     pagination_class = Paginator
+    filter_backends=[filter.DjangoFilterBackend, filters.SearchFilter , filters.OrderingFilter]
+    filterset_fields=['purchase_id' , 'customer_id' , 'date_of_purchase' , 'branch_id']
+    search_fields = ['purchase_id' , 'customer_id' , 'date_of_purchase' , 'branch_id'] 
+    ordering_fields = ['purchase_id' , 'customer_id' , 'date_of_purchase' , 'branch_id']
     serializer_class=PurchaseSerializer
     
     
