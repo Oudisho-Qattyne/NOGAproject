@@ -729,6 +729,9 @@ class BranchesRequestsSerializer(serializers.ModelSerializer):
             "processed":{
                 "read_only":True
             },
+            "note":{
+                "required" : False
+            }
         }
     def get_branch_name(self , object):
         if(object.branch_id):

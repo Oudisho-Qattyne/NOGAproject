@@ -587,7 +587,8 @@ def ProcessRequestedProduct(request):
     
     product_request_id = request.data['product_request_id']
     quantity = request.data['quantity']
-    if quantity <= 0:
+    quantity = int(quantity)
+    if int(quantity) <= 0:
         return Response({"quantity" : "invalid quantity"} , status=status.HTTP_400_BAD_REQUEST)
         
     request_status_pending = Request_Status.objects.get(id=1) 
@@ -607,7 +608,7 @@ def ProcessRequestedProduct(request):
             
         if products_request_instance.status in [request_status_fully_accept , request_status_partly_accept , request_status_reject] :
             return Response({"message" : "product request already processed"} , status=status.HTTP_400_BAD_REQUEST)
-        if quantity > product_instance.quantity:
+        if int(quantity) > product_instance.quantity:
             return Response({"message" : f"we don't have this quantity in the main warehouse, we have only {product_instance.quantity}"} , status=status.HTTP_400_BAD_REQUEST)
         
         products_movment_instance = Products_Movment.objects.create(branch=branch_request.branch_id , movement_type=True)    
